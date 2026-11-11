@@ -425,12 +425,12 @@ body[data-mode="home"] #homeBtn{display:none}
 <script>const SOLO="ira";</script>
 <script>
 /* ===== 設定 ===== */
-const APP_VER="2026.11.11-1";
+const APP_VER="2026.11.11-2";
 const SUPPORT_URL="https://ofuse.me/45tools";
 // 使い方のリンク（公開後に記事・動画のURLを入れる。空なら表示しない）
-const GUIDE={ note:"",  // 日本語：note記事（ゲーム別の記事があれば notes を優先）
+const GUIDE={ note:"https://note.com/45tools/n/nd0ae097ad7a6",  // 日本語：note記事（ゲーム別の記事があれば notes を優先）
   notes:{},
-  video:{} };
+  video:{ ira:{en:"https://youtube.com/shorts/3g89EoufDQo",zh:"https://youtube.com/shorts/wwCO4ph8B1A"}, rv:{en:"https://youtube.com/shorts/TlShrd4CXFs",zh:"https://youtube.com/shorts/5QP7jl2MzCk"}, kesi:{en:"https://youtube.com/shorts/iLeuxK0n_zE",zh:"https://youtube.com/shorts/tgDrTq0gm6s"} } };
 // ゲームの一覧（並び順＝ホームの順）。rel は公開日時（この時刻になるとホームに出る）。null は最初から
 const GAMES=[
   {id:"ira",ic:"maze",c:"--c-ira",rel:"2026-11-14T20:00:00+09:00"},
