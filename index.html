@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#EEF6FF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="45 Play">
+<meta name="description" content="体を動かしたり、ひと息ついたりする無料の遊び。インストール不要・広告なし。">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap">
+<title>45 Play｜体を動かす・ひと息つく遊び</title>
+<style>
+:root{
+  /* あそびの配色：ゲームごとに色を変える（タブ・ボタン・選択中のチップ） */
+  --bg:#EEF6FF; --dot:#DCE8FA; --panel:#FFFFFF; --ink:#1E2445; --muted:#66708F; --line:#D8E2F2; --soft:#F1F5FC;
+  --strong:#1E2445; --strong-ink:#FFFFFF; --danger:#F0435A; --star:#FFB21E; --ok:#1DB765;
+  --c-ira:#FF6A3D; --c-rv:#1F9D6B; --c-ball:#3D7BFF; --c-count:#3D7BFF; --c-add:#1DB765; --c-flash:#FF8F1F; --c-hb:#9B5CF6; --c-clock:#FF4F8B; --c-ks:#0FAFB4;
+  --ks-floor:#DCE6F4; --ks-wood1:#E9B77C; --ks-wood2:#D9A065; --ks-edge:#B57B45; --ks-grain:rgba(140,80,30,.18);
+  --accent:var(--c-count); --accent-ink:#FFFFFF; --field:#3D7BFF;
+  --fill:#3D7BFF; --g0:#3D7BFF; --g1:#FF8A3D; --lit:#FFD23F; --S:#FF8F1F; --B:#1DB765;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#141A2E; --dot:#1C2440; --panel:#1F2742; --ink:#EEF2FF; --muted:#A5AECB; --line:#333E62; --soft:#27304F; --strong:#EEF2FF; --strong-ink:#141A2E;
+    --danger:#FF6177; --star:#FFC23D; --ok:#33D17E;
+    --c-ira:#FF7E55; --c-rv:#2BB57F; --c-ball:#6A9BFF; --c-count:#5B8FFF; --c-add:#2DC873; --c-flash:#FF9B33; --c-hb:#A979FF; --c-clock:#FF6B9E; --c-ks:#2FC6CB;
+    --ks-floor:#1A2138; --ks-wood1:#9C6A3E; --ks-wood2:#875A33; --ks-edge:#5E3D22; --ks-grain:rgba(30,15,5,.3);
+    --fill:#5B8FFF; --g0:#5B8FFF; --g1:#FF9550; --lit:#FFD23F; --S:#FF9B33; --B:#2DC873; color-scheme:dark; }
+}
+body[data-mode="ira"]{--accent:var(--c-ira)} body[data-mode="rv"]{--accent:var(--c-rv)} body[data-mode="add"]{--accent:var(--c-add)} body[data-mode="flash"]{--accent:var(--c-flash)}
+body[data-mode="hb"]{--accent:var(--c-hb)} body[data-mode="clock"]{--accent:var(--c-clock)} body[data-mode="kesi"]{--accent:var(--c-ks)}
+*,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{touch-action:manipulation;-webkit-text-size-adjust:100%;background:var(--bg)}
+html,body{margin:0}
+body{min-height:100vh;padding:calc(env(safe-area-inset-top,0px) + 8px) env(safe-area-inset-right) 0 env(safe-area-inset-left);background:var(--bg);color:var(--ink);
+  background-image:radial-gradient(var(--dot) 1.4px,transparent 1.6px);background-size:22px 22px;background-attachment:fixed;
+  font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Hiragino Sans","Hiragino Kaku Gothic ProN","PingFang TC","PingFang SC",system-ui,sans-serif;overscroll-behavior:none}
+button,select,input,textarea{font:inherit;color:inherit}
+button,select,label{touch-action:manipulation;cursor:pointer}
+[hidden]{display:none!important}
+.num{font-family:"Fredoka","M PLUS Rounded 1c",system-ui,sans-serif;font-weight:600;font-variant-numeric:tabular-nums}
+.ic{display:inline-flex;width:20px;height:20px;flex:none}
+.ic svg{width:100%;height:100%}
+button:focus-visible,select:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:720px;margin:0 auto;padding:0 0 calc(190px + env(safe-area-inset-bottom))}
+
+.bar{display:flex;align-items:center;gap:6px;padding:8px 10px;max-width:720px;margin:0 auto}
+.bar .sp{flex:1;min-width:4px}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:14px;min-height:44px;padding:0 14px;font-size:14px;font-weight:500;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:none;color:var(--ink);text-decoration:none}
+.btn.icon{width:46px;padding:0;min-height:40px}
+.btn:active:not(:disabled){transform:translateY(1px)}
+.btn:disabled{opacity:.4}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:800;box-shadow:0 4px 0 color-mix(in srgb,var(--accent) 65%,#000)}
+.btn.primary:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 color-mix(in srgb,var(--accent) 65%,#000)}
+.btn.big{min-height:52px;font-size:17px;padding:0 28px}
+.btn[aria-expanded="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--panel);flex:none;min-width:0}
+.tabs{flex:0 1 auto}
+.tabs button{flex:1 1 0;border:0;background:transparent;min-height:46px;min-width:0;width:52px;padding:4px 6px;font-size:11px;font-weight:500;white-space:nowrap;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--ink)}
+.tabs button + button{border-left:1px solid var(--line)}
+.tabs .ic{width:20px;height:20px}
+.tabs [data-mode="count"]{--tc:var(--c-count)} .tabs [data-mode="add"]{--tc:var(--c-add)} .tabs [data-mode="flash"]{--tc:var(--c-flash)}
+.tabs [data-mode="hb"]{--tc:var(--c-hb)} .tabs [data-mode="clock"]{--tc:var(--c-clock)} .tabs [data-mode="kesi"]{--tc:var(--c-ks)}
+.tabs button .ic{color:var(--tc)}
+body[data-mode="count"] .tabs [data-mode="count"],body[data-mode="add"] .tabs [data-mode="add"],body[data-mode="flash"] .tabs [data-mode="flash"],
+body[data-mode="hb"] .tabs [data-mode="hb"],body[data-mode="clock"] .tabs [data-mode="clock"],body[data-mode="kesi"] .tabs [data-mode="kesi"]{background:var(--tc);color:#fff;font-weight:800}
+body[data-mode="count"] .tabs [data-mode="count"] .ic,body[data-mode="add"] .tabs [data-mode="add"] .ic,body[data-mode="flash"] .tabs [data-mode="flash"] .ic,
+body[data-mode="hb"] .tabs [data-mode="hb"] .ic,body[data-mode="clock"] .tabs [data-mode="clock"] .ic,body[data-mode="kesi"] .tabs [data-mode="kesi"] .ic{color:#fff}
+
+.menu{position:fixed;right:max(10px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 66px);z-index:60;background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 10px 30px rgba(10,30,18,.25);padding:6px;display:flex;flex-direction:column;min-width:260px;max-height:calc(100vh - 90px);overflow:auto}
+.menu hr{border:0;border-top:1px solid var(--line);margin:4px 8px}
+.mi{border:0;background:transparent;text-align:left;min-height:44px;padding:0 14px;font-size:15px;font-weight:500;border-radius:9px;display:flex;align-items:center;gap:10px;white-space:nowrap;color:var(--ink);text-decoration:none}
+.mi:active{background:var(--bg)}
+.mi .v{margin-left:auto;color:var(--muted);font-size:13px;font-weight:700}
+.mi .v.on{color:var(--accent)}
+.mi.accent{color:var(--accent);font-weight:700}
+.mi select{margin-left:auto;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:4px 6px;font-size:13px;color:var(--ink)}
+.scrim{position:fixed;inset:0;z-index:55}
+
+.panel{margin:10px 10px 0;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 2px 0 var(--line)}
+.panel h2{margin:0 0 6px;font-size:19px;font-weight:800;color:var(--accent)}
+.lead{margin:0 0 6px;font-size:13px;line-height:1.6;color:var(--muted)}
+.lead b{color:var(--ink)}
+.opt{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:12px}
+.ol{font-size:12px;color:var(--muted);min-width:76px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1.5px solid var(--line);background:var(--panel);border-radius:999px;min-height:38px;padding:0 12px;font-size:14px;color:var(--ink)}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+.chip input{width:64px;border:0;background:transparent;font:inherit;font-weight:700;color:inherit;text-align:center;padding:0;margin-left:4px}
+.stepper{display:inline-flex;align-items:center;gap:8px}
+.stepper b{font-size:26px;min-width:76px;text-align:center}
+.sw{justify-content:space-between}
+.sw input{appearance:none;-webkit-appearance:none;width:50px;height:30px;border-radius:15px;background:var(--line);position:relative;transition:background .2s;flex:none;margin:0}
+.sw input::after{content:"";position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.sw input:checked{background:var(--accent)}
+.sw input:checked::after{left:23px}
+.best{display:flex;align-items:center;gap:8px;font-size:14px}
+.best .ic{color:var(--star)}
+.best b{font-size:24px}
+.names{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:6px;width:100%}
+.names input{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:9px 10px;font-size:16px;color:var(--ink);min-width:0}
+
+[data-pane]{display:none}
+[data-pane].act{display:block}
+.vw{display:none}
+[data-v="setup"]>.vw[data-v="setup"],[data-v="play"]>.vw[data-v="play"]{display:block}
+.phead{display:flex;align-items:center;gap:8px;padding:2px 10px 4px}
+.phead .sp{flex:1}
+.prog{font-size:24px}
+.timer{font-size:18px;color:var(--muted);min-width:52px;text-align:right}
+.prompt{text-align:center;font-size:16px;padding:2px 10px 8px;min-height:30px}
+.sw0{display:inline-block;width:16px;height:16px;border-radius:3px;vertical-align:-2px;border:1px solid var(--line)}
+.sw0.f{background:var(--fill);border-color:var(--fill)}
+.sw0.e{background:var(--panel)}
+.banner{text-align:center;padding:10px 12px 0;font-size:15px;line-height:1.5;min-height:46px}
+.banner .okc{color:var(--ok);font-weight:700}
+.banner .ngc{color:var(--danger);font-weight:700}
+.banner small{display:block;color:var(--muted);font-size:12px}
+.banner .gold{color:var(--star);font-weight:700}
+
+/* マス */
+.cgrid{--gs:max(240px,min(calc(100vw - 24px),calc(100vh - 380px),620px));width:var(--gs);height:var(--gs);margin:0 auto;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));grid-template-rows:repeat(var(--n),minmax(0,1fr));
+  gap:2px;background:var(--line);padding:2px;border-radius:8px;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+@supports (height:100dvh){.cgrid{--gs:max(240px,min(calc(100vw - 24px),calc(100dvh - 380px),620px))}}
+.cgrid i{font-style:normal;background:var(--panel);border-radius:2px;display:flex;align-items:center;justify-content:center;position:relative;
+  font-family:"Fredoka",sans-serif;font-weight:600;font-size:calc(var(--gs) / var(--n) * .44);color:#fff;line-height:1;overflow:hidden}
+.cgrid i.f{background:var(--fill)}
+.cgrid.kj i{color:var(--ink);font-family:"M PLUS Rounded 1c","Hiragino Sans",sans-serif;font-weight:500;font-size:calc(var(--gs) / var(--n) * .64)}
+.cgrid.kj i.f{background:var(--panel)}
+.cgrid.kj i.mk{background:color-mix(in srgb,var(--g1) 22%,var(--panel))}
+.cgrid.kj i.mk::after{display:none}
+.cgrid.kj.rev i.t{color:#fff}
+.cgrid i em{position:absolute;left:2px;top:1px;font-style:normal;font-family:"Fredoka",sans-serif;font-size:.36em;line-height:1;opacity:.95}
+.kchip small{opacity:.5;margin:0 2px}
+.kin{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.kin input{width:52px;height:44px;border:1.5px solid var(--line);background:var(--soft);border-radius:12px;text-align:center;font-size:24px;color:var(--ink);padding:0}
+.kc{font-size:1.5em;font-weight:500;color:var(--accent);margin:0 2px}
+.cgrid i.mk::after{content:"";width:36%;height:36%;border-radius:50%;background:var(--g1)}
+.cgrid i.f.mk::after{background:#fff}
+.cgrid.rev i.dim{opacity:.28}
+.cgrid.rev i.t.g0{background:var(--g0)}
+.cgrid.rev i.t.g1{background:var(--g1)}
+.cgrid.rev i.t.ten{box-shadow:inset 0 0 0 2px var(--strong)}
+
+/* キーパッド・下のバー */
+.dock{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;padding:8px 8px calc(12px + env(safe-area-inset-bottom));z-index:20;pointer-events:none}
+.dockbar{display:flex;flex-direction:column;align-items:stretch;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:6px;box-shadow:0 2px 10px rgba(10,30,18,.14);pointer-events:auto;width:auto;max-width:520px}
+.dockbar.wide{width:100%}
+.dockbar .row2{display:flex;gap:6px}
+.dockbar .row2 .btn{flex:1;min-height:50px;font-size:16px}
+.kp{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) minmax(0,1.4fr);gap:5px}
+.key{border:1px solid var(--line);background:var(--soft);border-radius:12px;box-shadow:0 3px 0 var(--line);min-height:48px;font-size:24px;color:var(--ink);display:flex;align-items:center;justify-content:center;padding:0}
+.key:active:not(:disabled){background:var(--soft);transform:translateY(1px)}
+.key:disabled{opacity:.3}
+.key.ok{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-size:15px;font-weight:800;font-family:inherit;box-shadow:0 3px 0 color-mix(in srgb,var(--accent) 65%,#000)}
+.key .ic{width:24px;height:24px}
+.ansrow{display:flex;align-items:center;gap:10px;padding:0 6px}
+.ansrow .lbl{font-size:13px;color:var(--muted)}
+.ansbox{display:inline-block;min-width:80px;border-bottom:3px solid var(--accent);font-size:30px;text-align:center;line-height:1.1;padding:0 6px}
+.ask{text-align:center;font-size:15px;padding:4px 6px}
+
+/* たし算 */
+.card{margin:6px 10px 0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 10px;text-align:center;transition:background .2s}
+.card.okf{background:color-mix(in srgb,var(--ok) 18%,var(--panel))}
+.card.ngf{background:color-mix(in srgb,var(--danger) 16%,var(--panel))}
+.goal{display:flex;align-items:baseline;justify-content:center;gap:10px;font-size:14px;color:var(--muted)}
+.goal b{font-size:64px;color:var(--ink);line-height:1}
+.eq{display:flex;align-items:center;justify-content:center;gap:6px;font-size:clamp(30px,10.5vw,44px);margin-top:14px;flex-wrap:nowrap;white-space:nowrap}
+.eq span{color:var(--muted);font-size:.78em}
+.eq .ansbox{min-width:2.4em;font-size:1em}
+.fb{min-height:26px;margin-top:10px;font-size:16px;font-weight:700}
+.pgoal{display:flex;align-items:center;justify-content:center;gap:8px;font-size:19px;font-weight:800;line-height:1.3}
+.pgoal .pi{width:40px;height:40px;flex:none}
+.pask{font-size:15px;color:var(--muted);margin-top:2px;font-weight:700}
+.pics{display:flex;flex-direction:column;gap:5px;margin:12px auto 0;max-width:430px}
+.prow{display:flex;gap:10px;justify-content:center}
+.pgrp{display:flex;gap:3px;flex:1;max-width:205px}
+.sl{flex:1;aspect-ratio:1;display:flex;border-radius:50%;max-width:40px;min-width:0}
+.sl svg{width:100%;height:100%;display:block}
+.sl.emp{box-shadow:inset 0 0 0 2px var(--line);background:var(--soft)}
+.sl.none{visibility:hidden}
+.sl.add{animation:pop .3s ease-out}
+.sl.ghost{opacity:.35}
+.eq.pic{font-size:clamp(26px,8.6vw,40px);margin-top:10px}
+.eq small{font-size:.42em;color:var(--muted);font-family:"M PLUS Rounded 1c",sans-serif;font-weight:700;margin-left:-2px}
+.eq .pi{width:.85em;height:.85em;display:inline-flex}
+.pi svg{width:100%;height:100%}
+.chip .pi{width:24px;height:24px;display:inline-flex;vertical-align:middle;margin-right:4px}
+.chip.picchip{padding:0 10px 0 6px}
+
+/* 瞬間記憶 */
+.fhead{display:flex;align-items:center;gap:10px;padding:2px 10px 4px}
+.fhead .lv{font-size:24px}
+.hearts{display:inline-flex;gap:2px;color:var(--danger)}
+.hearts .ic{width:20px;height:20px}
+.hearts .ic.lost{color:var(--line)}
+.fgrid{--gs:max(240px,min(calc(100vw - 24px),calc(100vh - 330px),560px));width:var(--gs);height:var(--gs);margin:0 auto;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));grid-template-rows:repeat(var(--n),minmax(0,1fr));gap:6px;user-select:none;-webkit-user-select:none}
+@supports (height:100dvh){.fgrid{--gs:max(240px,min(calc(100vw - 24px),calc(100dvh - 330px),560px))}}
+.fgrid button{border:0;border-radius:10px;background:var(--panel);box-shadow:inset 0 0 0 1px var(--line);padding:6%;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;transition:background .12s,box-shadow .12s}
+.fgrid button img{width:100%;height:100%;object-fit:contain;border-radius:3px;pointer-events:none;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+.fgrid button.lit{background:var(--lit);box-shadow:0 0 18px 4px color-mix(in srgb,var(--lit) 70%,transparent)}
+.fgrid button.got{background:var(--ok);color:#fff}
+.fgrid button.bad{background:var(--danger);color:#fff}
+.fgrid button.ans{box-shadow:inset 0 0 0 4px var(--lit)}
+.fgrid button .ic{width:50%;height:50%}
+.fgrid button .no{position:absolute;left:5px;top:3px;font-family:"Fredoka",sans-serif;font-weight:700;font-size:calc(var(--gs) / var(--n) * .22);line-height:1;color:#fff;
+  background:var(--strong);border-radius:999px;min-width:1.5em;padding:.15em .3em;text-align:center;z-index:2}
+.fgrid button .nob{font-family:"Fredoka",sans-serif;font-weight:700;font-size:calc(var(--gs) / var(--n) * .42);color:#fff}
+.fmsg{text-align:center;font-size:17px;font-weight:700;min-height:30px;padding:2px 10px 8px}
+.bonus{display:flex;align-items:center;justify-content:center;gap:12px;margin:0 10px 8px;min-height:58px}
+.bonus img{height:50px;border-radius:4px;box-shadow:0 0 0 1px var(--line)}
+.bonus .nm{font-size:15px;line-height:1.3}
+.bonus .nm b{font-size:18px}
+
+/* 数当て */
+.hbcard{margin:6px 10px 0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 12px;text-align:center}
+.hbcard h3{margin:0 0 6px;font-size:20px}
+.hbcard p{margin:4px 0;color:var(--muted);font-size:14px;line-height:1.6}
+.digits{display:flex;justify-content:center;gap:8px;margin:12px 0 4px}
+.digits b{width:52px;height:64px;border-radius:10px;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:40px;background:var(--bg)}
+.digits b.on{border-color:var(--accent)}
+.hist{margin:8px 10px 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 10px;max-height:28vh;overflow:auto}
+.hist h4{margin:2px 0 4px;font-size:12px;color:var(--muted);font-weight:500}
+.hrow{display:flex;align-items:center;gap:10px;padding:4px 0;border-top:1px solid var(--line);font-size:15px}
+.hrow:first-of-type{border-top:0}
+.hrow .n{color:var(--muted);font-size:12px;width:22px}
+.hrow .g{font-size:24px;letter-spacing:4px;min-width:72px}
+.hrow .r{margin-left:auto;font-weight:700}
+.sb{display:inline-flex;align-items:center;gap:3px}
+.sb em{font-style:normal;font-weight:800;font-size:12px;width:18px;height:18px;border-radius:5px;color:#fff;display:inline-flex;align-items:center;justify-content:center;margin:0 2px 0 6px}
+.sb em.s{background:var(--S)} .sb em.b{background:var(--B)}
+.sb i{width:12px;height:12px;border-radius:50%;border:2px solid var(--line);display:inline-block}
+.sb i.s{background:var(--S);border-color:var(--S)} .sb i.b{background:var(--B);border-color:var(--B)}
+.legend{margin:8px 10px 0;font-size:12px;line-height:1.7;color:var(--muted)}
+.legend b{font-weight:800} .legend .h{color:var(--S)} .legend .b{color:var(--B)}
+.hrow.last{background:var(--soft);border-radius:8px;padding-left:4px}
+.memo{margin:8px 10px 0}
+.memo h4{margin:0 0 4px;font-size:12px;color:var(--muted);font-weight:500}
+.memo .mrow{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:4px}
+.memo button{border:1px solid var(--line);background:var(--panel);border-radius:8px;min-height:40px;font-size:20px;padding:0;position:relative;color:var(--ink)}
+.memo button.x{color:var(--muted);text-decoration:line-through;background:var(--soft)}
+.memo button.o{border-color:var(--g1);box-shadow:inset 0 0 0 2px var(--g1)}
+.hbres{font-size:26px;font-weight:700;text-align:center;min-height:36px;margin-top:6px}
+.hbres .h{color:var(--S)} .hbres .b{color:var(--B)}
+.secrets{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:10px}
+.secrets span{border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:13px;background:var(--bg)}
+.secrets b{font-size:22px;margin-left:6px;letter-spacing:2px}
+
+/* 時計 */
+.qtext{text-align:center;font-size:17px;padding:4px 10px 6px;min-height:32px}
+.clockbox{display:flex;justify-content:center}
+.clockbox svg{width:min(78vw,300px);height:min(78vw,300px);touch-action:none;user-select:none;-webkit-user-select:none}
+.clockbox svg.drag{cursor:grab}
+.choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:10px 10px 0}
+.choices .btn{min-height:56px;font-size:20px}
+.choices .btn.right{background:var(--ok);border-color:var(--ok);color:#fff}
+.choices .btn.wrong{background:var(--danger);border-color:var(--danger);color:#fff}
+
+/* 消しゴムおとし */
+.kpl{--pc:var(--c-count)}
+.kpl h3{margin:0 0 8px;font-size:16px;display:flex;align-items:center;gap:8px}
+.kdot{width:14px;height:14px;border-radius:50%;background:var(--pc);display:inline-block}
+.kpl .chip.on{background:var(--pc);border-color:var(--pc)}
+.kprev{display:block;width:100%;height:120px;margin-top:10px;border-radius:12px}
+.karea{font-size:12px;color:var(--muted);text-align:center;margin:4px 0 2px;line-height:1.5}
+.karea b{color:var(--ink)}
+.krow{display:flex;align-items:center;gap:10px;margin-top:8px;font-size:13px;color:var(--muted)}
+.krow span{min-width:3.5em}
+.krow input{flex:1;accent-color:var(--pc);height:28px}
+.kpl .btn{margin-top:10px;min-height:38px;font-size:13px}
+.kturn{display:flex;align-items:center;gap:8px;font-size:17px}
+.kbox{margin:0 10px;position:relative}
+#ksCv{display:block;width:100%;touch-action:none;border-radius:16px;user-select:none;-webkit-user-select:none}
+.kcol0{--pc:var(--c-count)} .kcol1{--pc:var(--c-clock)}
+
+/* イライラ棒 */
+.irabox{display:flex;justify-content:center;margin:0 10px}
+#iraCv{display:block;border-radius:16px;touch-action:none;user-select:none;-webkit-user-select:none;box-shadow:0 0 0 1px var(--line)}
+/* リバーシ */
+.rvsc{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:12px;border:2px solid transparent;font-size:13px;font-weight:700;min-width:0}
+.rvsc .nm{max-width:6em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rvsc b{font-size:22px}
+.rvsc.on{border-color:var(--accent);background:var(--panel)}
+.rvd{width:18px;height:18px;border-radius:50%;display:inline-block;flex:none}
+.rvd.b{background:radial-gradient(circle at 35% 30%,#555,#111 70%)} .rvd.w{background:radial-gradient(circle at 35% 30%,#fff,#d9d9d9 75%);box-shadow:inset 0 0 0 1px #bbb}
+.rvbox{display:flex;justify-content:center;padding:4px 10px}
+.rvboard{--bs:max(260px,min(calc(100vw - 20px),calc(100vh - 300px),560px));width:var(--bs);height:var(--bs);display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:2px;padding:6px;background:#0E6B47;border-radius:12px;box-shadow:0 4px 0 #0A4D33}
+@supports (height:100dvh){.rvboard{--bs:max(260px,min(calc(100vw - 20px),calc(100dvh - 300px),560px))}}
+.rvc{border:0;padding:0;background:#1F9D6B;border-radius:3px;display:flex;align-items:center;justify-content:center;position:relative}
+.rvc.last::after{content:"";position:absolute;width:16%;height:16%;border-radius:50%;background:#FF4F4F;z-index:2}
+.rvc .rvd{width:84%;height:84%;box-shadow:0 2px 2px rgba(0,0,0,.35)}
+.rvc .rvd.w{box-shadow:0 2px 2px rgba(0,0,0,.35),inset 0 0 0 1px #bbb}
+.rvc .rvd.flip{animation:rvflip .35s ease-out} .rvc .rvd.put{animation:pop .3s ease-out}
+@keyframes rvflip{0%{transform:scaleX(1)}50%{transform:scaleX(.05)}100%{transform:scaleX(1)}}
+.rvh{width:26%;height:26%;border-radius:50%;opacity:.45} .rvh.b{background:#111} .rvh.w{background:#fff}
+.rvrec .best{margin-top:6px}
+.app .ai.dim{opacity:.5}
+
+/* シート */
+.overlay{position:fixed;inset:0;background:rgba(10,30,18,.45);display:none;align-items:flex-end;justify-content:center;z-index:80}
+.overlay.on{display:flex}
+.sheet{background:var(--panel);width:100%;max-width:560px;border-radius:18px 18px 0 0;padding:18px 14px calc(16px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto;border:1px solid var(--line)}
+.sheet h2{margin:0 0 10px;font-size:18px}
+.resbig{text-align:center;margin:4px 0 10px}
+.resbig b{font-size:64px;line-height:1;display:block}
+.resbig span{font-size:13px;color:var(--muted)}
+.resbig .nb{display:inline-block;margin-top:6px;background:var(--star);color:#13241A;border-radius:999px;padding:2px 12px;font-size:13px;font-weight:700}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.stat{text-align:center;padding:8px 4px}
+.stat + .stat{border-left:1px solid var(--line)}
+.stat b{display:block;font-size:24px;line-height:1.1}
+.stat span{font-size:11px;color:var(--muted)}
+.cmp{display:grid;grid-template-columns:84px 1fr 48px 44px;align-items:center;gap:8px;font-size:13px;margin-top:8px}
+.cmp .barbg{height:12px;border-radius:6px;background:var(--soft);overflow:hidden}
+.cmp .barbg i{display:block;height:100%;border-radius:6px}
+.cmp .barbg i.a{background:var(--accent)} .cmp .barbg i.b{background:var(--muted)}
+.cmp b{font-size:20px;text-align:right}
+.cmp small{color:var(--muted);font-size:11px}
+.cmph{font-size:12px;color:var(--muted);margin-top:12px}
+.note{font-size:13px;line-height:1.6;margin:10px 0 0;color:var(--muted)}
+.note.good{color:var(--accent);font-weight:700}
+.mlist{margin:10px 0 0;padding:0;list-style:none;font-size:14px}
+.mlist li{padding:4px 0;border-top:1px solid var(--line)}
+.row{display:flex;gap:8px;margin-top:14px}
+.row .btn{flex:1}
+.help{line-height:1.7;font-size:14px}
+.help b{color:var(--accent)}
+.toast{position:fixed;left:50%;bottom:calc(180px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--strong);color:var(--strong-ink);padding:10px 18px;border-radius:12px;font-size:14px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:95;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
+.toast.on{opacity:1}
+@keyframes pop{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
+.pop{animation:pop .35s ease-out}
+@media (min-width:600px){ .tabs button{width:72px;font-size:12px} }
+@media (max-width:360px){ .tabs button{font-size:10px;padding:4px 1px;width:44px} .bar{gap:4px;padding:8px 6px} #menuBtn{width:40px} }
+/* ホーム（待ち受け） */
+.bar .ttl{display:flex;align-items:center;gap:8px;font-size:17px;font-weight:800;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .ttl .gdot{width:12px;height:12px;border-radius:50%;background:var(--accent);flex:none}
+.brand{font-family:"Fredoka",sans-serif;font-weight:700;font-size:22px;letter-spacing:.2px;display:flex;align-items:center;gap:8px}
+.brand i{width:30px;height:30px;border-radius:9px;background:#2456D6;color:#fff;font-style:normal;font-size:15px;display:inline-flex;align-items:center;justify-content:center}
+body[data-mode="home"] #homeBtn{display:none}
+.home{padding:4px 16px 0}
+.home .tag{margin:2px 2px 0;color:var(--muted);font-size:14px;font-weight:700}
+.apps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px 10px;margin:22px 0 0;padding:0;list-style:none}
+@media (min-width:560px){ .apps{grid-template-columns:repeat(5,minmax(0,1fr))} }
+.app{display:flex;flex-direction:column;align-items:center;gap:7px;border:0;background:none;padding:0;color:var(--ink);text-decoration:none;cursor:pointer;width:100%}
+.app .ai{--c:var(--c-count);width:100%;max-width:78px;aspect-ratio:1;border-radius:23%;position:relative;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(150deg,color-mix(in srgb,var(--c) 62%,#fff) 0%,var(--c) 70%);box-shadow:0 4px 0 color-mix(in srgb,var(--c) 62%,#000),0 8px 14px rgba(30,36,69,.16);transition:transform .12s}
+.app:active .ai{transform:translateY(3px) scale(.97)}
+.app .ai svg{width:64%;height:64%}
+.app .an{font-size:12.5px;font-weight:800;text-align:center;line-height:1.25;max-width:100%}
+.app .new{position:absolute;top:-7px;right:-9px;background:var(--danger);color:#fff;font:800 10px/1 "Fredoka",sans-serif;border-radius:999px;padding:4px 7px;box-shadow:0 2px 0 rgba(0,0,0,.18)}
+.app.soon .ai{filter:saturate(.35);opacity:.6}
+.app .when{font-size:10.5px;color:var(--muted);margin-top:-4px}
+.hnote{margin:28px 2px 0;padding:12px 14px;border-radius:16px;background:var(--panel);border:1px dashed var(--line);font-size:13px;line-height:1.6;color:var(--muted);display:flex;gap:10px;align-items:flex-start}
+.hnote .ic{color:var(--star);margin-top:1px}
+.notyet{margin:24px 16px 0;text-align:center;line-height:1.8}
+.notyet b{font-size:18px}
+.loading{text-align:center;color:var(--muted);padding:40px 0}
+.mi.guide{color:var(--accent);font-weight:700}
+</style>
+</head>
+<body data-mode="home">
+<div class="bar">
+  <button class="btn icon" id="homeBtn" aria-label="home"><i class="ic" data-ic="home"></i></button>
+  <div class="ttl" id="barTitle"></div>
+  <div class="sp"></div>
+  <button class="btn icon" id="menuBtn" aria-label="menu" aria-expanded="false"><i class="ic" data-ic="menu"></i></button>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<div class="menu" id="menu" role="menu" hidden>
+  <a class="mi guide" id="guideLink" role="menuitem" target="_blank" rel="noopener" hidden><i class="ic" data-ic="book"></i><span id="guideLbl"></span></a>
+  <button class="mi" id="helpBtn" role="menuitem"><i class="ic" data-ic="help"></i><span data-i="helpLong"></span></button>
+  <hr>
+  <button class="mi" id="sndBtn" role="menuitem"><i class="ic" data-ic="sound"></i><span data-i="sound"></span><span class="v" id="sndV"></span></button>
+  <button class="mi" id="ttsBtn" role="menuitem" hidden><i class="ic" data-ic="speak"></i><span data-i="tts"></span><span class="v" id="ttsV"></span></button>
+  <button class="mi" id="resetBtn" role="menuitem"><i class="ic" data-ic="trash"></i><span data-i="resetRec"></span></button>
+  <hr>
+  <label class="mi"><span data-i="langLbl"></span>
+    <select id="lang" aria-label="Language"><option value="ja">日本語</option><option value="en">English</option><option value="zh-Hant">繁體中文</option><option value="zh">简体中文</option></select></label>
+  <div class="mi" style="min-height:32px;font-size:12px;color:var(--muted)" id="verLbl"></div>
+  <a class="mi accent" id="supportLink" role="menuitem" target="_blank" rel="noopener"><i class="ic" data-ic="heart"></i><span data-i="support"></span></a>
+</div>
+
+<div class="wrap" id="wrap">
+  <section data-pane="home" class="home">
+    <div class="brand"><i>45</i>Play</div>
+    <p class="tag" data-i="tagline"></p>
+    <ul class="apps" id="apps"></ul>
+    <p class="hnote" id="soon" hidden></p>
+    <div class="hnote"><i class="ic" data-ic="spark"></i><span data-i="weekly"></span></div>
+  </section>
+  <section data-pane="notyet" class="notyet"><p id="notyetMsg"></p><a class="btn primary" href="./" id="toHome"><i class="ic" data-ic="home"></i><span data-i="toHome"></span></a></section>
+  <section data-pane="loading" class="loading"><span data-i="loading"></span></section>
+</div>
+
+<div class="dock"><div class="dockbar" id="dock" hidden></div></div>
+
+<div class="overlay" id="resOv"><div class="sheet" role="dialog" aria-modal="true">
+  <h2 id="resTitle"></h2>
+  <div class="resbig"><b class="num" id="resBig"></b><span id="resBigLbl"></span><div><span class="nb" id="resNew" hidden></span></div></div>
+  <div class="stats" id="resStats"></div>
+  <div id="resExtra"></div>
+  <div class="row"><button class="btn" id="resClose"><span data-i="close"></span></button><button class="btn primary" id="resRetry"><i class="ic" data-ic="repeat"></i><span data-i="retry"></span></button></div>
+</div></div>
+
+<div class="overlay" id="helpOv"><div class="sheet" role="dialog" aria-modal="true">
+  <h2 data-i="howTitle"></h2>
+  <div class="help" id="howText"></div>
+  <div class="row"><button class="btn" id="helpClose"><span data-i="close"></span></button></div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <radialGradient id="gMarble" cx="35%" cy="32%" r="75%"><stop offset="0" stop-color="#B9F2FF"/><stop offset=".55" stop-color="#2FB4E8"/><stop offset="1" stop-color="#1667B8"/></radialGradient>
+  <clipPath id="cBall"><circle cx="20" cy="20" r="17"/></clipPath>
+</defs></svg>
+
+
+<script>const SOLO=null;</script>
+<script>
+/* ===== 設定 ===== */
+const APP_VER="2026.11.11-1";
+const SUPPORT_URL="https://ofuse.me/45tools";
+// 使い方のリンク（公開後に記事・動画のURLを入れる。空なら表示しない）
+const GUIDE={ note:"",  // 日本語：note記事（ゲーム別の記事があれば notes を優先）
+  notes:{},
+  video:{} };
+// ゲームの一覧（並び順＝ホームの順）。rel は公開日時（この時刻になるとホームに出る）。null は最初から
+const GAMES=[
+  {id:"ira",ic:"maze",c:"--c-ira",rel:"2026-11-14T20:00:00+09:00"},
+  {id:"rv",ic:"rv",c:"--c-rv",rel:"2026-11-14T20:00:00+09:00"},
+  {id:"kesi",ic:"eraser",c:"--c-ks",rel:"2026-11-14T20:00:00+09:00"},
+];
+// 公開日時より前に使えるか確認するときは ?preview=1
+
+/* ===== アイコン ===== */
+const ICONS={
+ cgrid:'<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9.3 4v16M14.7 4v16M4 9.3h16M4 14.7h16"/><path d="M4.6 4.6h4.2v4.2H4.6zM9.9 9.9h4.2v4.2H9.9zM15.2 4.6h4.2v4.2h-4.2zM4.6 15.2h4.2v4.2H4.6z" fill="currentColor" stroke="none"/>',
+ sum:'<rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/>',
+ flash:'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 7l1.3 3.7L17 12l-3.7 1.3L12 17l-1.3-3.7L7 12l3.7-1.3z" fill="currentColor" stroke-width="1"/>',
+ hb:'<rect x="2.5" y="6.5" width="5.5" height="11" rx="1.5"/><rect x="9.25" y="6.5" width="5.5" height="11" rx="1.5"/><rect x="16" y="6.5" width="5.5" height="11" rx="1.5"/><path d="M10.6 10.4a1.4 1.4 0 1 1 1.9 1.3c-.3.1-.5.4-.5.8v.4"/><circle cx="12" cy="15" r=".7" fill="currentColor"/>',
+ clock:'<circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/>',
+ menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
+ home:'<rect x="4" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.8"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.8"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.8"/>',
+ book:'<path d="M12 6.5c-2-1.6-4.6-2-7.5-1.6v13c2.9-.4 5.5 0 7.5 1.6 2-1.6 4.6-2 7.5-1.6v-13c-2.9-.4-5.5 0-7.5 1.6z"/><path d="M12 6.5v13"/>',
+ spark:'<path d="M12 3l1.9 5.6L19.5 10l-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.4z" fill="currentColor" stroke-width="1"/><path d="M18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z" fill="currentColor" stroke-width=".8"/>',
+ help:'<circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1.1.9-1.1 1.6v.4"/><circle cx="12" cy="16.8" r=".9" fill="currentColor"/>',
+ heart:'<path d="M12 19.5s-7.5-4.4-7.5-10A4.3 4.3 0 0 1 12 6.8a4.3 4.3 0 0 1 7.5 2.7c0 5.6-7.5 10-7.5 10z"/>',
+ heartf:'<path d="M12 19.5s-7.5-4.4-7.5-10A4.3 4.3 0 0 1 12 6.8a4.3 4.3 0 0 1 7.5 2.7c0 5.6-7.5 10-7.5 10z" fill="currentColor"/>',
+ eye:'<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>',
+ eyeoff:'<path d="M4 4l16 16"/><path d="M9.9 6A9.5 9.5 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a16 16 0 0 1-2.6 3.4M6.4 7.6A16 16 0 0 0 2.5 12S6 18.5 12 18.5a9 9 0 0 0 3.6-.7"/>',
+ play:'<path d="M8 5.2v13.6L19 12z" fill="currentColor"/>',
+ x:'<path d="M7 7l10 10M17 7 7 17"/>',
+ back:'<path d="M9 6h10.5A1.5 1.5 0 0 1 21 7.5v9a1.5 1.5 0 0 1-1.5 1.5H9l-5.5-6z"/><path d="M12 10l4 4M16 10l-4 4"/>',
+ sound:'<path d="M4.5 9.5h3l4-3.5v12l-4-3.5h-3z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>',
+ speak:'<circle cx="9" cy="8" r="3.5"/><path d="M3.5 19.5a5.5 5.5 0 0 1 11 0"/><path d="M17 7.5a4 4 0 0 1 0 5M19.3 5.3a7 7 0 0 1 0 9.4"/>',
+ trash:'<path d="M4.5 7h15"/><path d="M9.5 7V5.3c0-.7.6-1.3 1.3-1.3h2.4c.7 0 1.3.6 1.3 1.3V7"/><path d="M6.5 7l.9 11.4c.1 1 .9 1.6 1.8 1.6h5.6c1 0 1.7-.7 1.8-1.6L17.5 7"/>',
+ check:'<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+ next:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+ repeat:'<path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.6 4.6v3.8h-3.8"/>',
+ trophy:'<path d="M8 4.5h8v4a4 4 0 0 1-8 0z"/><path d="M8 6H5v1.5A3 3 0 0 0 8 10.5M16 6h3v1.5a3 3 0 0 1-3 3"/><path d="M12 12.5v3.5M8.5 19.5h7l-.8-3.5H9.3z"/>',
+ eraser:'<g transform="rotate(-28 12 12)"><rect x="3" y="8" width="18" height="8.5" rx="2"/><path d="M9 8v8.5M15 8v8.5"/></g><path d="M5 21.5h14"/>',
+ undo:'<path d="M9 7H5V3"/><path d="M5.5 7.5A8 8 0 1 1 4 13"/>',
+ level:'<rect x="3" y="9" width="18" height="6" rx="3"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/>',
+ maze:'<path d="M5 20V9a3 3 0 0 1 3-3h3a3 3 0 0 1 3 3v6a3 3 0 0 0 3 3h2"/><circle cx="5" cy="20" r="1.6" fill="currentColor"/>',
+ rv:'<rect x="3.5" y="3.5" width="17" height="17" rx="2"/><circle cx="9" cy="9" r="2.6" fill="currentColor"/><circle cx="15" cy="15" r="2.6" fill="currentColor"/><circle cx="15" cy="9" r="2.6"/><circle cx="9" cy="15" r="2.6"/>',
+ swap:'<path d="M7 7h11l-3-3M17 17H6l3 3"/>',
+};
+const ico=n=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[n]||""}</svg>`;
+function paintIcons(root=document){ root.querySelectorAll("[data-ic]").forEach(el=>{ el.innerHTML=ico(el.dataset.ic); }); }
+paintIcons();
+
+
+/* ===== 文言 ===== */
+const I18N={
+ ja:{tIra:"イライラ棒",tRv:"リバーシ",soonAll:"45 Play は {d} に公開します。もう少し待っててね。",how_ira:"<b>イライラ棒</b>：玉を通路のかべにふれないように運び、ゴール（チェッカーの旗）をめざします。「傾き」ではスマホを傾けて、「指」では画面のどこかをなぞって動かします。かべや回るバーにふれるとハートが1つ減り、チェックポイントからやり直し。全10面。",how_rv:"<b>リバーシ</b>：相手の石をはさむと自分の色に変わります。置ける場所がないときは自動でパス。最後に石が多いほうの勝ち。1台で2人対戦か、CPU（よわい・ふつう・つよい）と対戦できます。「待った」で1手もどせます。",how_kesi:"<b>消しゴムおとし</b>：自分の消しゴム（または物差し）を指でスワイプして飛ばし、相手を机から落とします。形は曲げたり伸ばしたりできますが、面積はいつも同じです。",iraTitle:"イライラ棒",iraLead:"玉を<b>かべにふれないように</b>ゴールまで運ぼう。全10面、だんだん道がせまくなります。",iraCtl:"操作",iraTilt:"傾き",iraFinger:"指",iraTiltNote:"スマホを傾けて玉を転がします。<b>立って、体ごとゆっくり傾ける</b>のがコツ。画面の向きは縦に固定してください。",iraFingerNote:"画面のどこかを指でなぞると、玉がその方向に動きます（玉の上をさわらなくてOK）。",iraFrom:"はじめる面",iraVib:"ふれたらふるえる",iraBest:"いちばん先の面",iraBestV:"{n}面（{tm}）",iraCalib:"今の傾きを水平にする",iraCalibDone:"今の傾きを水平にしました",iraNoTilt:"傾きが使えないため、指の操作にしました",iraReady:"{n}面 スタート！",iraOuch:"あっ！ チェックポイントから",iraCp:"チェックポイント！",iraClear:"{n}面クリア！（{tm}）",iraAll:"全面クリア！",iraOver:"ゲームオーバー",iraCleared:"クリアした面",iraStageLbl:"最後の面",iraTotal:"合計タイム",iraStart:"はじめた面",iraStageN:"{n}面",rvTitle:"リバーシ",rvLead:"相手の石を<b>はさんでひっくり返そう</b>。最後に多いほうが勝ち。",rvVs:"対戦",rvVsCpu:"CPUと",rvVsTwo:"2人で（1台）",rvLv:"CPUの強さ",rvLv1:"よわい",rvLv2:"ふつう",rvLv3:"つよい",rvYour:"あなたの石",rvBlackFirst:"黒（先手）",rvWhiteSecond:"白（後手）",rvHint:"置ける場所を表示",rvRecV:"{w}勝 {l}敗 {d}分",rvUndo:"待った",rvRestart:"最初から",rvCant:"そこには置けません",rvPass:"{n} はパス",rvWin:"{n} の勝ち！",rvBlack:"黒",rvWhite:"白",rvMoves:"手数",
+  optReview:"答えたあとに「見直す？」と聞く",tagline:"体を動かしたり、ひと息ついたりする遊び",weekly:"毎週土曜日の夜に、新しい遊びがひとつずつ増えます。",toHome:"45 Play のトップへ",loading:"読み込み中…",loadFail:"読み込めませんでした。通信を確認してください",notYet:"{game} は {d} に公開されます。もう少し待っててね。",guideNote:"くわしい使い方（note）",guideVideo:"使い方（動画）",resetAsk2:"もう一度押すと、すべての記録を消します",how_count:"<b>マス数え</b>：塗られた（または塗られていない）マスの数を答えます。時間制限はありません。設定で「答えたあとに「見直す？」と聞く」をオンにすると、見直したときとそうでないときの正答率を比べられます。マスをタップすると印をつけられます。「文字」にすると、「毛」の中に混ざった「手」のように、似た字の数を数えます。",how_flash:"<b>瞬間記憶</b>：一瞬だけ光った場所をおぼえてタップします。「順番をおぼえる」では、ひとつずつ光った順番どおりにタップします。国旗ボーナスでは、国の名前を英語で読み上げます。",how_hb:"<b>数当て</b>：相手が決めた数字を当てます。<b>ストライク</b>＝数字も位置も同じ、<b>ボール</b>＝数字は合っているが位置がちがう。1台のスマホを順番に回して遊びます。ひとりでも遊べます。",how_add:"<b>たし算</b>：表示された数にいくつ足すと目標の数になるかを答えます。ビー玉やぶたなどの絵で数えることもできます。",how_clock:"<b>とけい</b>：時計の読み方・針の合わせ方・何分後の練習です。",howFoot:"記録はこの端末の中だけに保存されます。物理演算：matter-js（MIT License）。",tCount:"マス数え",tAdd:"たし算",tFlash:"瞬間記憶",tHb:"数当て",tClock:"とけい",tKesi:"消しゴム",ksTitle:"消しゴムおとし",ksLead:"指でスワイプして自分の消しゴム（または物差し）を飛ばし、相手を<b>机から落とそう</b>。形は曲げたり伸ばしたりできますが、<b>面積はいつも同じ</b>です。",ksVs:"対戦",ksVsCpu:"コンピューター",ksVsTwo:"ふたりで",ksYou:"あなた",ksCpu:"コンピューター",ksBlue:"あお",ksRed:"あか",ksEraser:"消しゴム",ksRuler:"15cm物差し",ksLen:"長さ",ksBend:"曲げ",ksRot:"向き",ksObs:"障害物",ksObsNote:"机の上に、動かないセロハンテープ・鉛筆けずり・ふでばこを置きます（毎回ちがう場所）。",ksReset:"もとの形にもどす",ksArea:"面積 {a} cm²（形を変えても同じ）",ksSize:"長さ {l} mm × はば {w} mm",ksTurn:"{name}の番",ksAim:"自分の{p}に指を置いて、飛ばしたい方へスワイプ。長くスワイプするほど強く飛びます。",ksTouchOwn:"自分のコマの近くからスワイプしてね",ksPE:"消しゴム",ksPR:"物差し",ksCpuThink:"コンピューターが考え中…",ksFall:"{name}が落ちた！",ksWinLbl:"の勝ち！",ksDraw:"ひきわけ",ksTurns:"ターン数",ksRecL:"コンピューターとの対戦",ksRecV:"{w}勝 {l}敗 {d}分",
+  start:"スタート",answer:"答える",confirm:"確定",next:"次へ",seeResult:"結果を見る",retry:"もう一度",close:"とじる",
+  yourAns:"答え",score:"スコア",accuracy:"正答率",avgTime:"平均時間",sec:"秒",correct:"正解",best:"ベスト",bestOf:"ベスト（{k}）",newBest:"ベスト更新！",recTitle:"記録",nq:"{n}問",optQ:"問題数",q10:"10問",q20:"20問",
+  sound:"効果音",tts:"国名を英語で読み上げ",on:"ON",off:"OFF",resetRec:"記録をリセット",resetAsk:"すべてのゲームの記録を消しますか？",resetDone:"記録を消しました",langLbl:"言語",helpLong:"使い方・このアプリについて",support:"このアプリを応援する",howTitle:"使い方",
+  how:"<b>マス数え</b>：塗られた（または塗られていない）マスの数を答えます。「文字」にすると、「毛」の中に混ざった「手」のように、似た字の数を数えます。時間制限はありません。答えたあとに「見直す」かどうかを選べて、見直したときとそうでないときの正答率を比べられます。マスをタップすると印をつけられます。<br><b>たし算</b>：表示された数にいくつ足すと目標の数になるかを答えます。<br><b>瞬間記憶</b>：一瞬だけ光った場所をおぼえてタップします。「順番をおぼえる」では、ひとつずつ光った順番どおりにタップします。国旗ボーナスでは、国の名前を英語で読み上げます。<br><b>数当て</b>：1台のスマホを順番に回して遊ぶ数当て。ストライク（数字も位置も同じ）とボール（数字だけ同じ）をヒントに当てます。ひとりでも遊べます。<br><b>時計</b>：時計の読み方・針の合わせ方・何分後の練習です。<br><b>消しゴム</b>：スワイプで消しゴムや物差しを飛ばして、相手を机から落とします。曲げたり伸ばしたりしても面積は同じです。<br><br>記録はこの端末の中だけに保存されます。国旗画像：flag-icons（MIT License）。",
+  cntTitle:"マスを数えよう",cntLead:"正確に数える力と、<b>見直す習慣</b>をきたえます。時間制限はありません。",optSize:"マスの数",optLayout:"塗り方",lyOrder:"順番に",lyRandom:"ランダム",lyMix:"まぜる",
+  optStyle:"マスの中身",stColor:"色",stKanji:"文字",optKanji:"文字の組",kCount:"数える字",kOther:"まぎらわしい字",qChar:"{c} はいくつ？",kSame:"2つの字はちがう字にしてください",optTarget:"数えるもの",tgFill:"塗られたマス",tgEmpty:"塗られていないマス",tgMix:"まぜる",optMark:"マスをタップして印をつける",
+  qFill:"<b>塗られたマス</b> {sw} はいくつ？",qEmpty:"<b>塗られていないマス</b> {sw} はいくつ？",
+  reviewing:"見直し中",askReview:"答えは <b class=\"num\" style=\"font-size:22px\">{n}</b>。見直しますか？",doReview:"見直す",submitNow:"このまま答える",reviewHint:"見直し中：印をつけながら、もう一度数えてみよう",
+  judgeOk:"正解！ {n}",judgeNg:"正解は {n}（あなたの答え {a}）",fixed:"見直しで直せた！",groupHint:"10個ずつ色を変えて番号をふっています",
+  withReview:"見直しあり",noReview:"見直しなし",reviewWins:"見直したときの正答率が {d} ポイント高い！",reviewTip:"答えたあとに「見直す」を使うと、見直したときとそうでないときの正答率をここで比べられます。",cmpThis:"今回",cmpAll:"これまでの正答率",
+  addTitle:"目標の数をつくろう",addLead:"表示された数に、<b>いくつ足すと目標の数になるか</b>を答えます。",optGoal:"目標の数",gRnd:"おまかせ",gCustom:"自由",optAddMode:"問題",m60:"60秒チャレンジ",goal:"目標",optPic:"絵",picNone:"数字だけ",picRnd:"おまかせ",picNote:"目標が50までのときは、絵をならべて数えられます。",picGoal:"{name}を {n}{u}に しよう！",picAsk:"あと 何{u}？",
+  addOk:"正解！",addNg:"正解は {n}",mistakes:"まちがえた問題",timeUp:"時間切れ！",yourWas:"あなた {a}",
+  optFlMode:"あそび方",flmPos:"場所をおぼえる",flmSeq:"順番をおぼえる",flLeadSeq:"マスが<b>ひとつずつ順番に</b>光ります。光った順番どおりにタップしよう。レベルが上がるほど長くなります。",flTapSeq:"光った順にタップ（{i} / {k}）",flMissSeq:"ざんねん！ 正しい順番はこれ",flRetry:"もう一度",flTitle:"光った場所をおぼえよう",flLead:"一瞬だけ光るマスの場所をおぼえて、タップします。<b>見る→おぼえる→思い出す</b>で脳を活性化。",optStartG:"はじめのマス",optSpeed:"光る時間",spSlow:"ゆっくり",spNormal:"ふつう",spFast:"はやい",
+  optFlags:"国旗",flagsOn:"表示する",flagsOff:"表示しない",level:"Lv",flReady:"じゅんび…",flLook:"おぼえて！",flTap:"光った場所をタップ（あと {n}）",flClear:"クリア！",flPerfect:"パーフェクト！ +{n}",
+  flBonusQ:"ボーナス：この国旗はどこにあった？",flBonusOk:"正解！ +{n}",flBonusNg:"ざんねん、ここでした",nextLv:"次のレベルへ",gameOver:"ゲームオーバー",reachLv:"到達レベル",bestLv:"最高レベル",
+  hbTitle:"数当て（ストライク＆ボール）",hbRule:"相手が決めた数字を当てるゲーム。<b>ストライク（S）</b>＝数字も位置も同じ、<b>ボール（B）</b>＝数字は合っているが位置がちがう。同じ数字は2回使えません。",hbLegend:"<b class=\"h\">S＝ストライク</b>：数字も位置も同じ　<b class=\"b\">B＝ボール</b>：数字は合っているが位置がちがう",
+  optPlayers:"人数",p1:"ひとり",optDigits:"けた数",digitsN:"{n}けた",playerN:"プレイヤー{n}",namesLbl:"名前",hbPass:"{name} さんの番",hbPassSub:"ほかの人に見えないようにして、秘密の数字を決めてね",ready:"準備OK",
+  hbSetTitle:"{name} さんの秘密の数字",show:"表示",hide:"かくす",decide:"決定",hbAllSet:"全員の数字が決まりました！",hbStartFrom:"{name} さんから当てていこう",begin:"はじめる",
+  hbVs:"{a} → {b} の数字を当てる",hbVsSolo:"アプリが決めた数字を当てよう",hbHB:"<span class=\"h\">{h} ストライク</span>　<span class=\"b\">{b} ボール</span>",memo:"メモ（タップで ✕ → ○ → なし）",
+  hbNext:"{name} さんへ渡す",hbWin:"{name} さんの勝ち！",hbWinSub:"{n}回目で当てました",hbSolo:"{n}回で正解！",secrets:"みんなの数字",hbBest:"ひとりの最少回数",hbHist:"これまでの答え",tries:"回",hbTurn:"{name} さんの番です",hbGuessNo:"この答えはもう使いました",
+  clOptQ:"もんだいの かず",clRec:"きろく",clBestOf:"いちばん いい てんすう（{k}）",clStart:"はじめる",clNext:"つぎへ",clAnswer:"こたえる",clSeeRes:"けっかを みる",clRight:"もん せいかい",clAvg:"1もんの じかん",clScore:"てんすう",clTitle:"とけいを よもう",clLead:"とけいの れんしゅうを しよう。<b>みじかい はり</b>は「なんじ」、<b>ながい はり</b>は「なんぷん」を おしえて くれるよ。",optKind:"もんだい",kRead:"よむ",kSet:"あわせる",kAfter:"なんぷんご",kMix:"まぜる",optLevel:"むずかしさ",
+  lvHour:"ちょうど",lvHalf:"30ぷん",lvFive:"5ふん",lvOne:"1ぷん",clReadQ:"この とけいは なんじ なんぷん？",clSetQ:"<b>{t}</b> に はりを あわせよう",clSetHint:"ながい はりと みじかい はりを ゆびで うごかしてね",clAfterQ:"この とけいの <b>{d}</b> は なんじ なんぷん？",
+  clOk:"せいかい！ すごいね！",clNg:"こたえは {t} だよ",hm:"{h}時{m}分",hm0:"{h}時",dMin:"{m}分後",dHour:"{h}時間後",dHM:"{h}時間{m}分後"},
+ en:{tIra:"Steady",tRv:"Reversi",soonAll:"45 Play opens on {d}. See you soon!",how_ira:"<b>Steady</b>: Guide the ball to the goal (checkered flag) without touching the walls. In Tilt mode tilt your phone; in Finger mode slide your finger anywhere on the screen. Touching a wall or a spinning bar costs a heart and sends you back to the last checkpoint. 10 stages.",how_rv:"<b>Reversi</b>: Trap your opponent's discs to flip them to your color. If you have no move, your turn is passed automatically. Most discs at the end wins. Play two players on one device, or against the CPU (Easy / Normal / Hard). “Undo” takes back a move.",how_kesi:"<b>Eraser Flick</b>: Swipe to flick your eraser (or ruler) and knock the other one off the desk. You can bend or stretch it, but its area always stays the same.",iraTitle:"Steady hand",iraLead:"Carry the ball to the goal <b>without touching the walls</b>. 10 stages, and the path gets narrower.",iraCtl:"Control",iraTilt:"Tilt",iraFinger:"Finger",iraTiltNote:"Tilt your phone to roll the ball. Tip: <b>stand up and lean your whole body slowly</b>. Lock your screen in portrait.",iraFingerNote:"Slide your finger anywhere on the screen and the ball moves the same way (no need to touch the ball).",iraFrom:"Start at",iraVib:"Vibrate on touch",iraBest:"Furthest stage",iraBestV:"Stage {n} ({tm})",iraCalib:"Set current tilt as level",iraCalibDone:"Current tilt set as level",iraNoTilt:"Tilt isn't available, switched to finger control",iraReady:"Stage {n} — go!",iraOuch:"Oops! Back to the checkpoint",iraCp:"Checkpoint!",iraClear:"Stage {n} clear! ({tm})",iraAll:"All stages clear!",iraOver:"Game over",iraCleared:"Stages cleared",iraStageLbl:"Last stage",iraTotal:"Total time",iraStart:"Started at",iraStageN:"Stage {n}",rvTitle:"Reversi",rvLead:"<b>Trap and flip</b> your opponent's discs. Most discs at the end wins.",rvVs:"Play",rvVsCpu:"vs CPU",rvVsTwo:"2 players (1 device)",rvLv:"CPU level",rvLv1:"Easy",rvLv2:"Normal",rvLv3:"Hard",rvYour:"Your color",rvBlackFirst:"Black (first)",rvWhiteSecond:"White (second)",rvHint:"Show legal moves",rvRecV:"{w}W {l}L {d}D",rvUndo:"Undo",rvRestart:"Restart",rvCant:"You can't place it there",rvPass:"{n} passes",rvWin:"{n} wins!",rvBlack:"Black",rvWhite:"White",rvMoves:"Moves",
+  optReview:"Ask “Check again?” after answering",tagline:"Little games to move and take a break",weekly:"A new game is added every Saturday evening (Japan time).",toHome:"Back to 45 Play",loading:"Loading…",loadFail:"Couldn't load. Check your connection.",notYet:"{game} opens on {d}. See you then!",guideNote:"How to use (note)",guideVideo:"How to play (video)",resetAsk2:"Tap again to delete all records",how_count:"<b>Count</b>: Count the filled (or empty) squares. There is no time limit. After answering you can check again, and compare your accuracy with and without checking. Tap squares to mark them. In Characters mode, count look-alike characters, such as 手 hidden among 毛.",how_flash:"<b>Flash</b>: Remember where the squares lit up for a moment, then tap them. In Order mode, tap them in the order they lit up. The flag bonus reads country names aloud in English.",how_hb:"<b>Guess</b>: Guess the secret number. <b>Strike</b> = right digit in the right place, <b>Ball</b> = right digit in the wrong place. Pass one phone around, or play alone.",how_add:"<b>Add</b>: How much do you add to the number shown to reach the goal? You can count with pictures like marbles and pigs.",how_clock:"<b>Clock</b>: Practice reading clocks, setting the hands and working out the time later.",howFoot:"Records stay on this device only. Physics: matter-js (MIT License).",tCount:"Count",tAdd:"Add",tFlash:"Flash",tHb:"Guess",tClock:"Clock",tKesi:"Flick",ksTitle:"Eraser Flick",ksLead:"Swipe to flick your eraser (or ruler) and <b>knock the other one off the desk</b>. You can bend or stretch it, but <b>its area always stays the same</b>.",ksVs:"Opponent",ksVsCpu:"Computer",ksVsTwo:"2 players",ksYou:"You",ksCpu:"Computer",ksBlue:"Blue",ksRed:"Red",ksEraser:"Eraser",ksRuler:"15 cm ruler",ksLen:"Length",ksBend:"Bend",ksRot:"Angle",ksObs:"Obstacles",ksObsNote:"Places tape, sharpeners and pencil cases on the desk that don't move (in new spots each game).",ksReset:"Reset shape",ksArea:"Area {a} cm² (same for any shape)",ksSize:"{l} mm long × {w} mm wide",ksTurn:"{name}'s turn",ksAim:"Put your finger on your {p} and swipe the way you want it to fly. A longer swipe flies harder.",ksTouchOwn:"Start your swipe on or near your own piece",ksPE:"eraser",ksPR:"ruler",ksCpuThink:"Computer is thinking…",ksFall:"{name} fell off!",ksWinLbl:" wins!",ksDraw:"Draw",ksTurns:"Turns",ksRecL:"vs. computer",ksRecV:"{w}W {l}L {d}D",
+  start:"Start",answer:"Answer",confirm:"Submit",next:"Next",seeResult:"See results",retry:"Play again",close:"Close",
+  yourAns:"Answer",score:"Score",accuracy:"Accuracy",avgTime:"Avg. time",sec:"s",correct:"Correct",best:"Best",bestOf:"Best ({k})",newBest:"New best!",recTitle:"Records",nq:"{n} q",optQ:"Questions",q10:"10 q",q20:"20 q",
+  sound:"Sound effects",tts:"Read country names aloud",on:"ON",off:"OFF",resetRec:"Reset records",resetAsk:"Delete records for all games?",resetDone:"Records deleted",langLbl:"Language",helpLong:"How to use / About",support:"Support this app",howTitle:"How to use",
+  how:"<b>Count</b>: Count the filled (or empty) squares. There's no time limit. After answering you can choose to check again, and compare your accuracy with and without checking. Tap squares to mark them.<br><b>Add</b>: How much do you add to the number shown to reach the goal?<br><b>Flash</b>: Remember where the squares lit up for a moment, then tap them. The flag bonus reads country names aloud in English.<br><b>Guess</b>: Strikes &amp; Balls, passing one phone around. You can also play alone.<br><b>Clock</b>: Practice reading clocks, setting the hands and working out the time later.<br><b>Flick</b>: Swipe to flick an eraser or ruler and knock the other one off the desk. Bending or stretching it keeps the same area.<br><br>Records stay on this device only. Flag images: flag-icons (MIT License).",
+  cntTitle:"Count the squares",cntLead:"Builds accurate counting and the <b>habit of checking your work</b>. No time limit.",optSize:"Grid size",optLayout:"Pattern",lyOrder:"In order",lyRandom:"Random",lyMix:"Mixed",
+  optStyle:"Squares show",stColor:"Colors",stKanji:"Characters",optKanji:"Character pair",kCount:"Count",kOther:"Look-alike",qChar:"How many {c}?",kSame:"Choose two different characters",optTarget:"Count",tgFill:"Filled",tgEmpty:"Empty",tgMix:"Mixed",optMark:"Tap squares to mark them",
+  qFill:"How many <b>filled</b> {sw} squares?",qEmpty:"How many <b>empty</b> {sw} squares?",
+  reviewing:"Checking",askReview:"Your answer is <b class=\"num\" style=\"font-size:22px\">{n}</b>. Check again?",doReview:"Check again",submitNow:"Submit as is",reviewHint:"Checking: count once more, marking as you go",
+  judgeOk:"Correct! {n}",judgeNg:"The answer is {n} (you said {a})",fixed:"Fixed by checking!",groupHint:"Numbered in groups of 10 with alternating colors",
+  withReview:"Checked",noReview:"Not checked",reviewWins:"Accuracy is {d} points higher when you check!",reviewTip:"Use “Check again” after answering to compare your accuracy here.",cmpThis:"This round",cmpAll:"Accuracy so far",
+  addTitle:"Make the goal number",addLead:"How much do you <b>add to the number shown to reach the goal</b>?",optGoal:"Goal",gRnd:"Random",gCustom:"Custom",optAddMode:"Mode",m60:"60-second challenge",goal:"Goal",optPic:"Pictures",picNone:"Numbers only",picRnd:"Mix",picNote:"When the goal is 50 or less, the pictures are lined up so you can count them.",picGoal:"Make it {n} {names}!",picAsk:"How many more?",
+  addOk:"Correct!",addNg:"The answer is {n}",mistakes:"Mistakes",timeUp:"Time's up!",yourWas:"you: {a}",
+  optFlMode:"Mode",flmPos:"Places",flmSeq:"Order",flLeadSeq:"Squares light up <b>one at a time</b>. Tap them in the same order. The sequence gets longer each level.",flTapSeq:"Tap in order ({i} / {k})",flMissSeq:"Oops! Here is the right order",flRetry:"Try again",flTitle:"Remember where it lit up",flLead:"Squares light up for an instant. Remember where, then tap them. <b>See → remember → recall</b> to wake up your brain.",optStartG:"Starting grid",optSpeed:"Flash time",spSlow:"Slow",spNormal:"Normal",spFast:"Fast",
+  optFlags:"Flags",flagsOn:"Show",flagsOff:"Hide",level:"Lv",flReady:"Get ready…",flLook:"Remember!",flTap:"Tap where it lit up ({n} left)",flClear:"Clear!",flPerfect:"Perfect! +{n}",
+  flBonusQ:"Bonus: where was this flag?",flBonusOk:"Correct! +{n}",flBonusNg:"Not quite — it was here",nextLv:"Next level",gameOver:"Game over",reachLv:"Level reached",bestLv:"Top level",
+  hbTitle:"Number guess (Strikes & Balls)",hbRule:"Guess the secret number. <b>Strike (S)</b> = right digit in the right place. <b>Ball (B)</b> = right digit in the wrong place. Each digit can be used only once.",hbLegend:"<b class=\"h\">S = Strike</b>: right digit, right place　<b class=\"b\">B = Ball</b>: right digit, wrong place",
+  optPlayers:"Players",p1:"Solo",optDigits:"Digits",digitsN:"{n} digits",playerN:"Player {n}",namesLbl:"Names",hbPass:"{name}'s turn",hbPassSub:"Don't let anyone else see — choose your secret number",ready:"Ready",
+  hbSetTitle:"{name}'s secret number",show:"Show",hide:"Hide",decide:"Set",hbAllSet:"Everyone has chosen a number!",hbStartFrom:"{name} goes first",begin:"Begin",
+  hbVs:"{a} → guess {b}'s number",hbVsSolo:"Guess the app's secret number",hbHB:"<span class=\"h\">{h} Strike</span>　<span class=\"b\">{b} Ball</span>",memo:"Memo (tap: ✕ → ○ → none)",
+  hbNext:"Pass to {name}",hbWin:"{name} wins!",hbWinSub:"Solved on try {n}",hbSolo:"Solved in {n} tries!",secrets:"Secret numbers",hbBest:"Fewest tries (solo)",hbHist:"Guesses",tries:" tries",hbTurn:"{name}'s turn",hbGuessNo:"You already tried that",
+  clOptQ:"Questions",clRec:"Records",clBestOf:"Best ({k})",clStart:"Start",clNext:"Next",clAnswer:"Answer",clSeeRes:"See results",clRight:"correct",clAvg:"Avg. time",clScore:"Score",clTitle:"Read the clock",clLead:"Practice reading the time, setting the hands, and working out the time later.",optKind:"Type",kRead:"Read",kSet:"Set",kAfter:"Later",kMix:"Mixed",optLevel:"Level",
+  lvHour:"On the hour",lvHalf:"30 min",lvFive:"5 min",lvOne:"1 min",clReadQ:"What time is it?",clSetQ:"Set the clock to <b>{t}</b>",clSetHint:"Drag the long and short hands",clAfterQ:"What time is it <b>{d}</b>?",
+  clOk:"Correct!",clNg:"The answer is {t}",hm:"{h}:{mm}",hm0:"{h}:00",dMin:"{m} min later",dHour:"{h} hr later",dHM:"{h} hr {m} min later"},
+ "zh-Hant":{tIra:"穿越迷道",tRv:"黑白棋",soonAll:"45 Play 將在 {d} 公開，再等一下喔。",how_ira:"<b>穿越迷道</b>：讓球不碰到通道的牆，一路送到終點（方格旗）。「傾斜」是把手機傾斜來滾球，「手指」是在畫面任何地方滑動來移動。碰到牆或旋轉的桿子會少一顆愛心，並從檢查點重來。共10關。",how_rv:"<b>黑白棋</b>：夾住對方的棋子就能翻成自己的顏色。沒有地方可以下時會自動跳過。最後棋子多的一方獲勝。可以一支手機兩人對戰，或和電腦（簡單・普通・困難）對戰。「悔棋」可以退回一步。",how_kesi:"<b>橡皮擦大戰</b>：用手指滑動，把自己的橡皮擦（或尺）彈出去，把對方撞下桌子。形狀可以彎曲或拉長，但面積永遠一樣。",iraTitle:"穿越迷道",iraLead:"讓球<b>不碰到牆</b>，送到終點吧。共10關，通道會越來越窄。",iraCtl:"操作",iraTilt:"傾斜",iraFinger:"手指",iraTiltNote:"傾斜手機讓球滾動。訣竅是<b>站起來，整個身體慢慢傾斜</b>。請把畫面方向鎖定為直向。",iraFingerNote:"在畫面任何地方用手指滑動，球就會往同方向移動（不用碰到球）。",iraFrom:"從第幾關開始",iraVib:"碰到時震動",iraBest:"最遠到達",iraBestV:"第{n}關（{tm}）",iraCalib:"把現在的傾斜設為水平",iraCalibDone:"已把現在的傾斜設為水平",iraNoTilt:"無法使用傾斜，已改為手指操作",iraReady:"第{n}關 開始！",iraOuch:"哎呀！從檢查點重來",iraCp:"檢查點！",iraClear:"第{n}關過關！（{tm}）",iraAll:"全部過關！",iraOver:"遊戲結束",iraCleared:"過關數",iraStageLbl:"最後一關",iraTotal:"總時間",iraStart:"開始的關",iraStageN:"第{n}關",rvTitle:"黑白棋",rvLead:"<b>夾住對方的棋子翻過來</b>。最後多的一方獲勝。",rvVs:"對戰",rvVsCpu:"和電腦",rvVsTwo:"兩人（一支手機）",rvLv:"電腦強度",rvLv1:"簡單",rvLv2:"普通",rvLv3:"困難",rvYour:"你的棋子",rvBlackFirst:"黑（先手）",rvWhiteSecond:"白（後手）",rvHint:"顯示可以下的位置",rvRecV:"{w}勝 {l}敗 {d}和",rvUndo:"悔棋",rvRestart:"重新開始",rvCant:"這裡不能下",rvPass:"{n} 跳過",rvWin:"{n} 贏了！",rvBlack:"黑",rvWhite:"白",rvMoves:"手數",
+  optReview:"作答後詢問「要檢查嗎？」",tagline:"動一動、喘口氣的小遊戲",weekly:"每週六晚上（日本時間）會新增一個遊戲。",toHome:"回到 45 Play",loading:"讀取中…",loadFail:"無法讀取，請確認網路連線",notYet:"{game} 將在 {d} 開放，敬請期待！",guideNote:"使用說明（note）",guideVideo:"玩法說明（影片）",resetAsk2:"再按一次就會刪除所有紀錄",how_count:"<b>數格子</b>：回答塗色（或沒塗色）的格子數量。沒有時間限制。作答後可以選擇「檢查」，比較有檢查和沒檢查時的正確率。點格子可以做記號。選「文字」時，要數出混在「毛」裡的「手」這類相似的字。",how_flash:"<b>瞬間記憶</b>：記住一瞬間發光的位置並點選。「記順序」要照發光的順序點選。國旗加分題會用英語朗讀國名。",how_hb:"<b>猜數字</b>：猜出對方決定的數字。<b>好球</b>＝數字和位置都對，<b>壞球</b>＝數字對但位置不對。一支手機輪流傳著玩，也可以一個人玩。",how_add:"<b>加法</b>：顯示的數字再加多少會變成目標數字？也可以用彈珠、小豬等圖案來數。",how_clock:"<b>時鐘</b>：練習看時鐘、調指針、算幾分鐘後的時間。",howFoot:"紀錄只保存在這台裝置中。物理引擎：matter-js（MIT License）。",tCount:"數格子",tAdd:"加法",tFlash:"瞬間記憶",tHb:"猜數字",tClock:"時鐘",tKesi:"橡皮擦",ksTitle:"橡皮擦大戰",ksLead:"用手指滑動，把自己的橡皮擦（或尺）彈出去，把對方<b>撞下桌子</b>。形狀可以彎曲或拉長，但<b>面積永遠一樣</b>。",ksVs:"對手",ksVsCpu:"電腦",ksVsTwo:"兩個人",ksYou:"你",ksCpu:"電腦",ksBlue:"藍",ksRed:"紅",ksEraser:"橡皮擦",ksRuler:"15公分尺",ksLen:"長度",ksBend:"彎曲",ksRot:"方向",ksObs:"障礙物",ksObsNote:"在桌上放不會動的膠帶、削鉛筆機和鉛筆盒（每次位置不同）。",ksReset:"恢復原狀",ksArea:"面積 {a} cm²（改變形狀也一樣）",ksSize:"長 {l} mm × 寬 {w} mm",ksTurn:"輪到{name}",ksAim:"手指放在自己的{p}上，往想飛的方向滑。滑得越長，飛得越用力。",ksTouchOwn:"請從自己的棋子附近開始滑",ksPE:"橡皮擦",ksPR:"尺",ksCpuThink:"電腦思考中…",ksFall:"{name}掉下去了！",ksWinLbl:"贏了！",ksDraw:"平手",ksTurns:"回合數",ksRecL:"對戰電腦",ksRecV:"{w}勝 {l}敗 {d}平",
+  start:"開始",answer:"作答",confirm:"確定",next:"下一題",seeResult:"看結果",retry:"再玩一次",close:"關閉",
+  yourAns:"答案",score:"分數",accuracy:"正確率",avgTime:"平均時間",sec:"秒",correct:"答對",best:"最佳",bestOf:"最佳（{k}）",newBest:"刷新紀錄！",recTitle:"紀錄",nq:"{n}題",optQ:"題數",q10:"10題",q20:"20題",
+  sound:"音效",tts:"用英語朗讀國名",on:"開",off:"關",resetRec:"清除紀錄",resetAsk:"要刪除所有遊戲的紀錄嗎？",resetDone:"已刪除紀錄",langLbl:"語言",helpLong:"使用方法・關於本程式",support:"支持這個程式",howTitle:"使用方法",
+  how:"<b>數格子</b>：回答塗色（或沒塗色）的格子數量。沒有時間限制。作答後可以選擇是否「檢查」，並比較有檢查和沒檢查時的正確率。點格子可以做記號。<br><b>加法</b>：顯示的數字再加多少會變成目標數字？<br><b>瞬間記憶</b>：記住一瞬間發光的位置並點選。國旗加分題會用英語朗讀國名。<br><b>猜數字</b>：一支手機輪流傳著玩的猜數字（好球＆壞球），也可以一個人玩。<br><b>時鐘</b>：練習看時鐘、調指針、算幾分鐘後的時間。<br><b>橡皮擦</b>：滑動彈出橡皮擦或尺，把對方撞下桌子。彎曲或拉長，面積都一樣。<br><br>紀錄只保存在這台裝置中。國旗圖片：flag-icons（MIT License）。",
+  cntTitle:"數數看有幾格",cntLead:"鍛鍊正確數數的能力和<b>檢查的習慣</b>。沒有時間限制。",optSize:"格子數",optLayout:"塗法",lyOrder:"依序",lyRandom:"隨機",lyMix:"混合",
+  optStyle:"格子內容",stColor:"顏色",stKanji:"文字",optKanji:"文字組合",kCount:"要數的字",kOther:"相似的字",qChar:"{c} 有幾個？",kSame:"請選兩個不同的字",optTarget:"要數的",tgFill:"塗色的格子",tgEmpty:"沒塗色的格子",tgMix:"混合",optMark:"點格子做記號",
+  qFill:"<b>塗色的格子</b> {sw} 有幾格？",qEmpty:"<b>沒塗色的格子</b> {sw} 有幾格？",
+  reviewing:"檢查中",askReview:"你的答案是 <b class=\"num\" style=\"font-size:22px\">{n}</b>。要再檢查嗎？",doReview:"檢查",submitNow:"直接作答",reviewHint:"檢查中：一邊做記號，一邊再數一次",
+  judgeOk:"答對了！ {n}",judgeNg:"正確答案是 {n}（你的答案 {a}）",fixed:"檢查後改對了！",groupHint:"每10個換一種顏色並標上編號",
+  withReview:"有檢查",noReview:"沒檢查",reviewWins:"有檢查時的正確率高了 {d} 個百分點！",reviewTip:"作答後使用「檢查」，就能在這裡比較有檢查和沒檢查時的正確率。",cmpThis:"這次",cmpAll:"目前為止的正確率",
+  addTitle:"湊出目標數字",addLead:"顯示的數字<b>再加多少會變成目標數字</b>？",optGoal:"目標數字",gRnd:"隨機",gCustom:"自訂",optAddMode:"題目",m60:"60秒挑戰",goal:"目標",optPic:"圖案",picNone:"只有數字",picRnd:"隨機",picNote:"目標在50以內時，會排出圖案讓你數。",picGoal:"讓{name}變成 {n}{u}！",picAsk:"還差幾{u}？",
+  addOk:"答對了！",addNg:"正確答案是 {n}",mistakes:"答錯的題目",timeUp:"時間到！",yourWas:"你答 {a}",
+  optFlMode:"玩法",flmPos:"記位置",flmSeq:"記順序",flLeadSeq:"格子會<b>一個一個依序</b>發光。照發光的順序點選。等級越高，順序越長。",flTapSeq:"照順序點選（{i} / {k}）",flMissSeq:"可惜！正確的順序是這樣",flRetry:"再試一次",flTitle:"記住發光的位置",flLead:"記住一瞬間發光的格子位置，然後點選。<b>看→記→想起來</b>，活化大腦。",optStartG:"開始的格子",optSpeed:"發光時間",spSlow:"慢",spNormal:"普通",spFast:"快",
+  optFlags:"國旗",flagsOn:"顯示",flagsOff:"不顯示",level:"Lv",flReady:"準備…",flLook:"記住！",flTap:"點選發光的位置（還有 {n} 個）",flClear:"過關！",flPerfect:"完美！ +{n}",
+  flBonusQ:"加分題：這面國旗在哪裡？",flBonusOk:"答對了！ +{n}",flBonusNg:"可惜，在這裡",nextLv:"下一關",gameOver:"遊戲結束",reachLv:"到達等級",bestLv:"最高等級",
+  hbTitle:"猜數字（好球＆壞球）",hbRule:"猜出對方決定的數字。<b>好球（S）</b>＝數字和位置都對，<b>壞球（B）</b>＝數字對但位置不對。同一個數字不能用兩次。",hbLegend:"<b class=\"h\">S＝好球</b>：數字和位置都對　<b class=\"b\">B＝壞球</b>：數字對但位置不對",
+  optPlayers:"人數",p1:"一個人",optDigits:"位數",digitsN:"{n}位數",playerN:"玩家{n}",namesLbl:"名字",hbPass:"輪到 {name}",hbPassSub:"不要讓別人看到，決定你的秘密數字",ready:"準備好了",
+  hbSetTitle:"{name} 的秘密數字",show:"顯示",hide:"隱藏",decide:"決定",hbAllSet:"大家的數字都決定好了！",hbStartFrom:"從 {name} 開始猜",begin:"開始",
+  hbVs:"{a} → 猜 {b} 的數字",hbVsSolo:"猜猜程式決定的數字",hbHB:"<span class=\"h\">{h} 好球</span>　<span class=\"b\">{b} 壞球</span>",memo:"筆記（點選：✕ → ○ → 無）",
+  hbNext:"交給 {name}",hbWin:"{name} 贏了！",hbWinSub:"第{n}次猜中",hbSolo:"{n}次猜中！",secrets:"大家的數字",hbBest:"一個人的最少次數",hbHist:"猜過的數字",tries:"次",hbTurn:"輪到 {name}",hbGuessNo:"這個數字已經猜過了",
+  clOptQ:"題數",clRec:"紀錄",clBestOf:"最佳（{k}）",clStart:"開始",clNext:"下一題",clAnswer:"作答",clSeeRes:"看結果",clRight:"題答對",clAvg:"平均時間",clScore:"分數",clTitle:"學看時鐘",clLead:"練習看時間、調指針、算幾分鐘後的時間。",optKind:"題型",kRead:"看時間",kSet:"調指針",kAfter:"幾分後",kMix:"混合",optLevel:"難度",
+  lvHour:"整點",lvHalf:"30分",lvFive:"5分",lvOne:"1分",clReadQ:"這個時鐘是幾點幾分？",clSetQ:"把指針調到 <b>{t}</b>",clSetHint:"可以拖動長針和短針",clAfterQ:"這個時間的 <b>{d}</b> 是？",
+  clOk:"答對了！",clNg:"正確答案是 {t}",hm:"{h}點{m}分",hm0:"{h}點",dMin:"{m}分鐘後",dHour:"{h}小時後",dHM:"{h}小時{m}分鐘後"}
+,"zh":{tIra:"穿越迷道",tRv:"黑白棋",soonAll:"45 Play 将在 {d} 公开，再等一下喔。",how_ira:"<b>穿越迷道</b>：让球不碰到信道的墙，一路送到终点（方格旗）。「倾斜」是把手机倾斜来滚球，「手指」是在画面任何地方滑动来移动。碰到墙或旋转的杆子会少一颗爱心，并从检查点重来。共10关。",how_rv:"<b>黑白棋</b>：夹住对方的棋子就能翻成自己的颜色。没有地方可以下时会自动跳过。最后棋子多的一方获胜。可以一支手机两人对战，或和电脑（简单・普通・困难）对战。「悔棋」可以退回一步。",how_kesi:"<b>橡皮擦大战</b>：用手指滑动，把自己的橡皮擦（或尺）弹出去，把对方撞下桌子。形状可以弯曲或拉长，但面积永远一样。",iraTitle:"穿越迷道",iraLead:"让球<b>不碰到墙</b>，送到终点吧。共10关，信道会越来越窄。",iraCtl:"操作",iraTilt:"倾斜",iraFinger:"手指",iraTiltNote:"倾斜手机让球滚动。诀窍是<b>站起来，整个身体慢慢倾斜</b>。请把画面方向锁定为直向。",iraFingerNote:"在画面任何地方用手指滑动，球就会往同方向移动（不用碰到球）。",iraFrom:"从第几关开始",iraVib:"碰到时震动",iraBest:"最远到达",iraBestV:"第{n}关（{tm}）",iraCalib:"把现在的倾斜设为水平",iraCalibDone:"已把现在的倾斜设为水平",iraNoTilt:"无法使用倾斜，已改为手指操作",iraReady:"第{n}关 开始！",iraOuch:"哎呀！从检查点重来",iraCp:"检查点！",iraClear:"第{n}关过关！（{tm}）",iraAll:"全部过关！",iraOver:"游戏结束",iraCleared:"过关数",iraStageLbl:"最后一关",iraTotal:"总时间",iraStart:"开始的关",iraStageN:"第{n}关",rvTitle:"黑白棋",rvLead:"<b>夹住对方的棋子翻过来</b>。最后多的一方获胜。",rvVs:"对战",rvVsCpu:"和电脑",rvVsTwo:"两人（一支手机）",rvLv:"电脑强度",rvLv1:"简单",rvLv2:"普通",rvLv3:"困难",rvYour:"你的棋子",rvBlackFirst:"黑（先手）",rvWhiteSecond:"白（后手）",rvHint:"显示可以下的位置",rvRecV:"{w}胜 {l}败 {d}和",rvUndo:"悔棋",rvRestart:"重新开始",rvCant:"这里不能下",rvPass:"{n} 跳过",rvWin:"{n} 赢了！",rvBlack:"黑",rvWhite:"白",rvMoves:"手数",
+  optReview:"作答后询问「要检查吗？」",tagline:"动一动、喘口气的小游戏",weekly:"每周六晚上（日本时间）会添加一个游戏。",toHome:"回到 45 Play",loading:"读取中…",loadFail:"无法读取，请确认网络连接",notYet:"{game} 将在 {d} 开放，敬请期待！",guideNote:"使用说明（note）",guideVideo:"玩法说明（视频）",resetAsk2:"再按一次就会删除所有纪录",how_count:"<b>数格子</b>：回答涂色（或没涂色）的格子数量。没有时间限制。作答后可以选择「检查」，比较有检查和没检查时的正确率。点格子可以做记号。选「文本」时，要数出混在「毛」里的「手」这类相似的字。",how_flash:"<b>瞬间记忆</b>：记住一瞬间发光的位置并点击。「记顺序」要照发光的顺序点击。国旗加分题会用英语朗读国名。",how_hb:"<b>猜数字</b>：猜出对方决定的数字。<b>好球</b>＝数字和位置都对，<b>坏球</b>＝数字对但位置不对。一支手机轮流传着玩，也可以一个人玩。",how_add:"<b>加法</b>：显示的数字再加多少会变成目标数字？也可以用弹珠、小猪等图案来数。",how_clock:"<b>时钟</b>：练习看时钟、调指针、算几分钟后的时间。",howFoot:"纪录只保存在这台设备中。物理引擎：matter-js（MIT License）。",tCount:"数格子",tAdd:"加法",tFlash:"瞬间记忆",tHb:"猜数字",tClock:"时钟",tKesi:"橡皮擦",ksTitle:"橡皮擦大战",ksLead:"用手指滑动，把自己的橡皮擦（或尺）弹出去，把对方<b>撞下桌子</b>。形状可以弯曲或拉长，但<b>面积永远一样</b>。",ksVs:"对手",ksVsCpu:"电脑",ksVsTwo:"两个人",ksYou:"你",ksCpu:"电脑",ksBlue:"蓝",ksRed:"红",ksEraser:"橡皮擦",ksRuler:"15公分尺",ksLen:"长度",ksBend:"弯曲",ksRot:"方向",ksObs:"障碍物",ksObsNote:"在桌上放不会动的胶带、削铅笔机和铅笔盒（每次位置不同）。",ksReset:"恢复原状",ksArea:"面积 {a} cm²（改变形状也一样）",ksSize:"长 {l} mm × 宽 {w} mm",ksTurn:"轮到{name}",ksAim:"手指放在自己的{p}上，往想飞的方向滑。滑得越长，飞得越用力。",ksTouchOwn:"请从自己的棋子附近开始滑",ksPE:"橡皮擦",ksPR:"尺",ksCpuThink:"电脑思考中…",ksFall:"{name}掉下去了！",ksWinLbl:"赢了！",ksDraw:"平手",ksTurns:"回合数",ksRecL:"对战电脑",ksRecV:"{w}胜 {l}败 {d}平",
+  start:"开始",answer:"作答",confirm:"确定",next:"下一题",seeResult:"看结果",retry:"再玩一次",close:"关闭",
+  yourAns:"答案",score:"分数",accuracy:"正确率",avgTime:"平均时间",sec:"秒",correct:"答对",best:"最佳",bestOf:"最佳（{k}）",newBest:"刷新纪录！",recTitle:"纪录",nq:"{n}题",optQ:"题数",q10:"10题",q20:"20题",
+  sound:"音效",tts:"用英语朗读国名",on:"开",off:"关",resetRec:"清除纪录",resetAsk:"要删除所有游戏的纪录吗？",resetDone:"已删除纪录",langLbl:"语言",helpLong:"使用方法・关于本程序",support:"支持这个程序",howTitle:"使用方法",
+  how:"<b>数格子</b>：回答涂色（或没涂色）的格子数量。没有时间限制。作答后可以选择是否「检查」，并比较有检查和没检查时的正确率。点格子可以做记号。<br><b>加法</b>：显示的数字再加多少会变成目标数字？<br><b>瞬间记忆</b>：记住一瞬间发光的位置并点击。国旗加分题会用英语朗读国名。<br><b>猜数字</b>：一支手机轮流传着玩的猜数字（好球＆坏球），也可以一个人玩。<br><b>时钟</b>：练习看时钟、调指针、算几分钟后的时间。<br><b>橡皮擦</b>：滑动弹出橡皮擦或尺，把对方撞下桌子。弯曲或拉长，面积都一样。<br><br>纪录只保存在这台设备中。国旗图片：flag-icons（MIT License）。",
+  cntTitle:"数数看有几格",cntLead:"锻炼正确数数的能力和<b>检查的习惯</b>。没有时间限制。",optSize:"格子数",optLayout:"涂法",lyOrder:"依序",lyRandom:"随机",lyMix:"混合",
+  optStyle:"格子内容",stColor:"颜色",stKanji:"文本",optKanji:"文本组合",kCount:"要数的字",kOther:"相似的字",qChar:"{c} 有几个？",kSame:"请选两个不同的字",optTarget:"要数的",tgFill:"涂色的格子",tgEmpty:"没涂色的格子",tgMix:"混合",optMark:"点格子做记号",
+  qFill:"<b>涂色的格子</b> {sw} 有几格？",qEmpty:"<b>没涂色的格子</b> {sw} 有几格？",
+  reviewing:"检查中",askReview:"你的答案是 <b class=\"num\" style=\"font-size:22px\">{n}</b>。要再检查吗？",doReview:"检查",submitNow:"直接作答",reviewHint:"检查中：一边做记号，一边再数一次",
+  judgeOk:"答对了！ {n}",judgeNg:"正确答案是 {n}（你的答案 {a}）",fixed:"检查后改对了！",groupHint:"每10个换一种颜色并标上编号",
+  withReview:"有检查",noReview:"没检查",reviewWins:"有检查时的正确率高了 {d} 个百分点！",reviewTip:"作答后使用「检查」，就能在这里比较有检查和没检查时的正确率。",cmpThis:"这次",cmpAll:"目前为止的正确率",
+  addTitle:"凑出目标数字",addLead:"显示的数字<b>再加多少会变成目标数字</b>？",optGoal:"目标数字",gRnd:"随机",gCustom:"自订",optAddMode:"题目",m60:"60秒挑战",goal:"目标",optPic:"图案",picNone:"只有数字",picRnd:"随机",picNote:"目标在50以内时，会排出图案让你数。",picGoal:"让{name}变成 {n}{u}！",picAsk:"还差几{u}？",
+  addOk:"答对了！",addNg:"正确答案是 {n}",mistakes:"答错的题目",timeUp:"时间到！",yourWas:"你答 {a}",
+  optFlMode:"玩法",flmPos:"记位置",flmSeq:"记顺序",flLeadSeq:"格子会<b>一个一个依序</b>发光。照发光的顺序点击。等级越高，顺序越长。",flTapSeq:"照顺序点击（{i} / {k}）",flMissSeq:"可惜！正确的顺序是这样",flRetry:"再试一次",flTitle:"记住发光的位置",flLead:"记住一瞬间发光的格子位置，然后点击。<b>看→记→想起来</b>，活化大脑。",optStartG:"开始的格子",optSpeed:"发光时间",spSlow:"慢",spNormal:"普通",spFast:"快",
+  optFlags:"国旗",flagsOn:"显示",flagsOff:"不显示",level:"Lv",flReady:"准备…",flLook:"记住！",flTap:"点击发光的位置（还有 {n} 个）",flClear:"过关！",flPerfect:"完美！ +{n}",
+  flBonusQ:"加分题：这面国旗在哪里？",flBonusOk:"答对了！ +{n}",flBonusNg:"可惜，在这里",nextLv:"下一关",gameOver:"游戏结束",reachLv:"到达等级",bestLv:"最高等级",
+  hbTitle:"猜数字（好球＆坏球）",hbRule:"猜出对方决定的数字。<b>好球（S）</b>＝数字和位置都对，<b>坏球（B）</b>＝数字对但位置不对。同一个数字不能用两次。",hbLegend:"<b class=\"h\">S＝好球</b>：数字和位置都对　<b class=\"b\">B＝坏球</b>：数字对但位置不对",
+  optPlayers:"人数",p1:"一个人",optDigits:"位数",digitsN:"{n}位数",playerN:"玩家{n}",namesLbl:"名字",hbPass:"轮到 {name}",hbPassSub:"不要让别人看到，决定你的秘密数字",ready:"准备好了",
+  hbSetTitle:"{name} 的秘密数字",show:"显示",hide:"隐藏",decide:"决定",hbAllSet:"大家的数字都决定好了！",hbStartFrom:"从 {name} 开始猜",begin:"开始",
+  hbVs:"{a} → 猜 {b} 的数字",hbVsSolo:"猜猜程序决定的数字",hbHB:"<span class=\"h\">{h} 好球</span>　<span class=\"b\">{b} 坏球</span>",memo:"笔记（点击：✕ → ○ → 无）",
+  hbNext:"交给 {name}",hbWin:"{name} 赢了！",hbWinSub:"第{n}次猜中",hbSolo:"{n}次猜中！",secrets:"大家的数字",hbBest:"一个人的最少次数",hbHist:"猜过的数字",tries:"次",hbTurn:"轮到 {name}",hbGuessNo:"这个数字已经猜过了",
+  clOptQ:"题数",clRec:"纪录",clBestOf:"最佳（{k}）",clStart:"开始",clNext:"下一题",clAnswer:"作答",clSeeRes:"看结果",clRight:"题答对",clAvg:"平均时间",clScore:"分数",clTitle:"学看时钟",clLead:"练习看时间、调指针、算几分钟后的时间。",optKind:"题型",kRead:"看时间",kSet:"调指针",kAfter:"几分后",kMix:"混合",optLevel:"难度",
+  lvHour:"整点",lvHalf:"30分",lvFive:"5分",lvOne:"1分",clReadQ:"这个时钟是几点几分？",clSetQ:"把指针调到 <b>{t}</b>",clSetHint:"可以拖动长针和短针",clAfterQ:"这个时间的 <b>{d}</b> 是？",
+  clOk:"答对了！",clNg:"正确答案是 {t}",hm:"{h}点{m}分",hm0:"{h}点",dMin:"{m}分钟后",dHour:"{h}小时后",dHM:"{h}小时{m}分钟后"}
+
+};
+
+/* ===== 共通 ===== */
+const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+let lang=store.get("b_lang",null)||(()=>{ const n=(navigator.language||"ja").toLowerCase(); return n.startsWith("zh")?(/(tw|hk|mo|hant)/.test(n)?"zh-Hant":"zh"):n.startsWith("ja")?"ja":"en"; })();
+if(!I18N[lang]) lang="ja";
+const t=(k,p)=>{let s=(I18N[lang]||I18N.ja)[k]??I18N.ja[k]??k; if(p) for(const x in p) s=s.split("{"+x+"}").join(p[x]); return s;};
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const rnd=n=>Math.floor(Math.random()*n);
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a};
+const now=()=>performance.now();
+const fmtSec=ms=>(ms/1000).toFixed(1)+t("sec");
+const pct=(c,n)=>n?Math.round(c/n*100):0;
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+function toast(msg){ const el=$("#toast"); el.textContent=msg; el.classList.add("on"); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove("on"),1800); }
+const fun=m=>[2,5,7,9].includes(m%10)?"ふん":"ぷん"; // 1年生向けの読み（いっぷん・にふん…）
+function fmtHM(h,m){ if(lang==="ja") return m===0?`${h}じ`:`${h}じ ${m}${fun(m)}`; return m===0?t("hm0",{h}):t("hm",{h,m,mm:String(m).padStart(2,"0")}); }
+function fmtDelta(min){ const h=Math.floor(min/60), m=min%60;
+  if(lang==="ja") return h===0?`${m}${fun(m)}ご`:m===0?`${h}じかんご`:`${h}じかん ${m}${fun(m)}ご`;
+  return h===0?t("dMin",{m}):m===0?t("dHour",{h}):t("dHM",{h,m}); }
+
+/* 音 */
+let AC=null;
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; } } if(AC.state==="suspended") AC.resume().catch(()=>{}); return AC; }
+function tone(f,d,type="sine",v=.15,delay=0){ if(!store.get("b_snd",true)) return; const a=ac(); if(!a) return;
+  try{ const o=a.createOscillator(),g=a.createGain(); o.type=type; o.frequency.value=f; const t0=a.currentTime+delay;
+  g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(v,t0+.012); g.gain.exponentialRampToValueAtTime(.0001,t0+d);
+  o.connect(g); g.connect(a.destination); o.start(t0); o.stop(t0+d+.03); }catch(e){} }
+const sfx={ok(){tone(880,.12,"sine",.18);tone(1320,.2,"sine",.15,.09)},ng(){tone(220,.28,"square",.07);tone(165,.3,"square",.06,.1)},tap(){tone(700,.05,"triangle",.07)},
+  win(){[523,659,784,1047].forEach((f,i)=>tone(f,.22,"sine",.15,i*.1))},flash(){tone(1046,.12,"sine",.1)},hit(){tone(988,.1,"triangle",.12)}};
+document.addEventListener("pointerdown",()=>ac(),{once:true});
+function speak(txt){ if(!store.get("b_tts",true)||!("speechSynthesis" in window)||!txt) return;
+  try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(txt); u.lang="en-US"; u.rate=.92;
+    const v=speechSynthesis.getVoices().find(v=>(v.lang||"").replace("_","-").startsWith("en-US")); if(v) u.voice=v; speechSynthesis.speak(u); }catch(e){} }
+
+/* 選択チップ */
+function chips(el,get,set,onChange){
+  const r=()=>$$("[data-val]",el).forEach(b=>b.classList.toggle("on",b.dataset.val===String(get())));
+  el.addEventListener("click",e=>{ const b=e.target.closest("[data-val]"); if(!b) return; if(e.target.tagName==="INPUT"&&b.classList.contains("on")) return; set(b.dataset.val); r(); onChange&&onChange(); });
+  r(); return r;
+}
+
+/* 下のバー */
+const dock=$("#dock");
+function setDock(html,wide){ dock.innerHTML=html||""; dock.hidden=!html; dock.classList.toggle("wide",!!wide); paintIcons(dock); }
+function kpHTML(okLabel,okDisabled,disabled){ disabled=disabled||new Set();
+  const k=d=>`<button class="key num" data-k="${d}"${disabled.has(String(d))?" disabled":""}>${d}</button>`;
+  return `<div class="kp">${[1,2,3,4,5].map(k).join("")}<button class="key" data-k="del" aria-label="delete"><i class="ic" data-ic="back"></i></button>${[6,7,8,9,0].map(k).join("")}<button class="key ok" data-k="ok"${okDisabled?" disabled":""}>${esc(okLabel)}</button></div>`; }
+/* 結果シート */
+let resRetry=null, resClose=null;
+function showResult(o){
+  $("#resTitle").textContent=o.title; $("#resBig").textContent=o.big; $("#resBig").style.fontSize=String(o.big).length>5?"34px":String(o.big).length>3?"48px":""; $("#resBigLbl").textContent=o.bigLbl||"";
+  $("#resNew").hidden=!o.isBest; $("#resNew").textContent=t("newBest");
+  $("#resStats").innerHTML=(o.stats||[]).map(([l,v])=>`<div class="stat"><b class="num">${esc(v)}</b><span>${esc(l)}</span></div>`).join("");
+  $("#resStats").style.gridTemplateColumns=`repeat(${(o.stats||[]).length||1},minmax(0,1fr))`;
+  $("#resExtra").innerHTML=o.extra||""; resRetry=o.retry; resClose=o.close;
+  $("#resOv").classList.add("on"); if(o.isBest) sfx.win();
+}
+function hideResult(){ $("#resOv").classList.remove("on"); }
+$("#resRetry").onclick=()=>{ hideResult(); resRetry&&resRetry(); };
+$("#resClose").onclick=()=>{ hideResult(); resClose&&resClose(); };
+
+/* =========================================================
+   ホームのアイコンの絵（白い線画・48×48）
+   ========================================================= */
+const TILE={
+ ira:'<svg viewBox="0 0 48 48" fill="none"><path d="M10 40V22c0-5 3-8 8-8h4c4 0 6-2 6-6" stroke="#fff" stroke-opacity=".35" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 40V22c0-5 3-8 8-8h4c4 0 6-2 6-6" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1 5"/><path d="M33 31l9-6" stroke="#fff" stroke-width="4" stroke-linecap="round"/><circle cx="10" cy="38" r="5" fill="#fff"/><rect x="24" y="2" width="9" height="7" rx="1" fill="#fff"/><path d="M24 5.5h9M28.5 2v7" stroke="#FF6A3D" stroke-width="1.6"/></svg>',
+ rv:'<svg viewBox="0 0 48 48" fill="none"><rect x="5" y="5" width="38" height="38" rx="5" fill="#0E6B47" fill-opacity=".55"/><path d="M24 6v36M6 24h36" stroke="#fff" stroke-opacity=".35" stroke-width="1.4"/><circle cx="15" cy="15" r="7" fill="#1E2445"/><circle cx="33" cy="33" r="7" fill="#1E2445"/><circle cx="33" cy="15" r="7" fill="#fff"/><circle cx="15" cy="33" r="7" fill="#fff"/></svg>',
+ kesi:'<svg viewBox="0 0 48 48" fill="none"><rect x="4" y="30" width="40" height="12" rx="3" fill="#fff" fill-opacity=".3"/><g transform="rotate(-22 22 22)"><rect x="8" y="14" width="28" height="15" rx="3" fill="#fff"/><rect x="18" y="14" width="10" height="15" fill="#3D7BFF"/></g><path d="M36 10l6-4M38 16l7-1" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>',
+};
+
+/* =========================================================
+   読み込み・画面の切り替え
+   ========================================================= */
+const MODS={};
+let mode="home";
+const PREVIEW=(()=>{ try{ const q=new URLSearchParams(location.search).get("preview"); if(q==="0") store.del("b_preview"); else if(q!=null) store.set("b_preview",true); }catch(e){} return !!store.get("b_preview",false); })();
+const gameOf=id=>GAMES.find(g=>g.id===id);
+const relTime=g=>g&&g.rel?Date.parse(g.rel):0;
+const isOpen=g=>!!g&&(!g.rel||Date.now()>=relTime(g));
+const canPlay=g=>isOpen(g)||PREVIEW;
+const isNew=g=>!!g&&!!g.rel&&isOpen(g)&&Date.now()-relTime(g)<7*864e5;
+function fmtWhen(g){ try{ return new Date(relTime(g)).toLocaleString(lang==="zh"?"zh-CN":lang==="zh-Hant"?"zh-TW":lang,{month:"short",day:"numeric",weekday:"short",hour:"2-digit",minute:"2-digit"}); }catch(e){ return g.rel; } }
+
+window.BRAIN={ pending:{},
+  def(id,html,factory){ const w=$("#wrap"); w.insertAdjacentHTML("beforeend",html); const sec=$(`[data-pane="${id}"]`,w);
+    paintIcons(sec); $$("[data-i]",sec).forEach(el=>el.innerHTML=t(el.dataset.i));
+    const m=factory(); MODS[id]=m; m.init(); const p=this.pending[id]; if(p){ delete this.pending[id]; p.res(); } } };
+function loadGame(id){ if(MODS[id]) return Promise.resolve();
+  if(BRAIN.pending[id]) return BRAIN.pending[id].pr;
+  let res,rej; const pr=new Promise((a,b)=>{res=a;rej=b;}); BRAIN.pending[id]={pr,res,rej};
+  const need=id==="kesi"&&typeof Matter==="undefined"?["lib/matter.min.js"]:[];
+  const go=()=>{ const s=document.createElement("script"); s.src=`games/${id}.js?v=${APP_VER}`; s.onerror=()=>{ delete BRAIN.pending[id]; rej(new Error("load")); }; document.head.append(s); };
+  if(need.length){ const l=document.createElement("script"); l.src=need[0]; l.onload=go; l.onerror=()=>{ delete BRAIN.pending[id]; rej(new Error("load")); }; document.head.append(l); return pr; }
+  go(); return pr; }
+
+function showPane(p){ $$("#wrap > [data-pane]").forEach(s=>s.classList.toggle("act",s.dataset.pane===p)); }
+function barTitle(){ const g=gameOf(mode); $("#barTitle").innerHTML=g?`<i class="gdot"></i><span>${esc(t(TNAME[g.id]))}</span>`:""; }
+const TNAME={ira:"tIra",rv:"tRv",kesi:"tKesi"};
+let navSeq=0;
+async function setMode(m,push){ const g=gameOf(m); const my=++navSeq;
+  if(!g||!canPlay(g)){ if(g&&SOLO){ mode="notyet"; document.body.dataset.mode="home"; $("#notyetMsg").innerHTML=t("notYet",{game:`<b>${esc(t(TNAME[g.id]))}</b>`,d:esc(fmtWhen(g))}); showPane("notyet"); setDock(""); barTitle(); return; }
+    m="home"; }
+  if(m==="home"){ mode="home"; document.body.dataset.mode="home"; showPane("home"); setDock(""); barTitle(); renderHome(); if(location.hash) history.replaceState(null,"",location.pathname+location.search); window.scrollTo(0,0); paintGuide(); return; }
+  document.body.dataset.mode=m; if(!MODS[m]){ showPane("loading"); setDock(""); }
+  try{ await loadGame(m); }catch(e){ toast(t("loadFail")); if(my===navSeq){ mode="home"; setMode("home"); } return; }
+  if(my!==navSeq) return;
+  mode=m; document.body.dataset.mode=m; showPane(m); barTitle(); store.set("b_mode",m);
+  if(!SOLO&&location.hash!=="#"+m) history[push?"pushState":"replaceState"](null,"","#"+m);
+  MODS[m].refresh&&MODS[m].refresh(); MODS[m].dock(); window.scrollTo(0,0); paintGuide(); }
+function renderHome(){ const list=GAMES.filter(g=>isOpen(g)||PREVIEW); $("#soon").hidden=!!list.length; $("#soon").innerHTML=t("soonAll",{d:esc(fmtWhen(GAMES[0]))});
+  $("#apps").innerHTML=list.map(g=>{ const soon=!isOpen(g);
+    return `<li><a class="app${soon?" soon":""}" href="#${g.id}" data-go="${g.id}"><span class="ai" style="--c:var(${g.c})">${TILE[g.id]||""}${isNew(g)?`<b class="new">NEW</b>`:""}</span><span class="an">${esc(t(TNAME[g.id]))}</span>${soon?`<span class="when">${esc(fmtWhen(g))}</span>`:""}</a></li>`; }).join(""); }
+$("#apps").addEventListener("click",e=>{ const a=e.target.closest("[data-go]"); if(!a) return; e.preventDefault(); sfx.tap(); setMode(a.dataset.go,true); });
+$("#homeBtn").onclick=()=>{ if(SOLO){ location.href="./"; return; } setMode("home"); };
+window.addEventListener("hashchange",()=>{ if(SOLO) return; const m=location.hash.slice(1)||"home"; if(m!==mode) setMode(m); });
+window.addEventListener("popstate",()=>{ if(SOLO) return; const m=location.hash.slice(1)||"home"; if(m!==mode) setMode(m); });
+
+/* 下のバー（ゲームが無い画面では何もしない） */
+dock.addEventListener("click",e=>{ const b=e.target.closest("[data-k],[data-act]"); if(!b||b.disabled) return; const m=MODS[mode]; if(!m) return;
+  if(b.dataset.k!=null){ m.key&&m.key(b.dataset.k); } else { m.act&&m.act(b.dataset.act); } });
+document.addEventListener("keydown",e=>{ if(e.target.matches&&e.target.matches("input,textarea,select")) return; if($(".overlay.on")) return; const m=MODS[mode]; if(!m||!m.key) return;
+  if(/^[0-9]$/.test(e.key)) m.key(e.key); else if(e.key==="Backspace") m.key("del"); else if(e.key==="Enter") m.key("ok"); else return; e.preventDefault(); });
+
+/* メニュー */
+function openMenu(on){ $("#menu").hidden=!on; $("#scrim").hidden=!on; $("#menuBtn").setAttribute("aria-expanded",on?"true":"false"); }
+$("#menuBtn").onclick=()=>openMenu($("#menu").hidden); $("#scrim").onclick=()=>openMenu(false);
+function paintToggles(){ const s=store.get("b_snd",true),v=store.get("b_tts",true);
+  $("#sndV").textContent=t(s?"on":"off"); $("#sndV").classList.toggle("on",s); $("#ttsV").textContent=t(v?"on":"off"); $("#ttsV").classList.toggle("on",v); }
+// 使い方：日本語はnote記事、英語・中国語はそのゲームのショート
+function guideURL(){ if(lang==="ja") return (GUIDE.notes&&GUIDE.notes[mode])||GUIDE.note; const v=GUIDE.video[mode]; if(!v) return ""; return lang==="en"?v.en:(v.zh||v.en); }
+function paintGuide(){ const u=guideURL(),a=$("#guideLink"); a.hidden=!u; if(u) a.href=u; $("#guideLbl").textContent=t(lang==="ja"?"guideNote":"guideVideo"); }
+$("#sndBtn").onclick=()=>{ store.set("b_snd",!store.get("b_snd",true)); paintToggles(); sfx.tap(); };
+$("#ttsBtn").onclick=()=>{ const v=!store.get("b_tts",true); store.set("b_tts",v); paintToggles(); if(v) speak("Japan"); };
+let resetArmed=0;
+$("#resetBtn").onclick=()=>{ if(Date.now()-resetArmed>4000){ resetArmed=Date.now(); toast(t("resetAsk2")); return; } resetArmed=0; openMenu(false);
+  ["p_ira_rec","p_rv_rec","b_ks_rec"].forEach(k=>store.del(k)); Object.values(MODS).forEach(m=>m.refresh()); toast(t("resetDone")); };
+$("#lang").onchange=e=>{ lang=e.target.value; store.set("b_lang",lang); applyLang(); };
+function howHTML(){ const ids=GAMES.filter(g=>MODS[g.id]&&g.id===mode).map(g=>g.id); const show=ids.length?ids:GAMES.filter(g=>canPlay(g)).map(g=>g.id);
+  return show.map(id=>t("how_"+id)).join("<br><br>")+`<br><br><small style="color:var(--muted)">${t("howFoot")}</small>`; }
+$("#helpBtn").onclick=()=>{ openMenu(false); $("#howText").innerHTML=howHTML(); $("#helpOv").classList.add("on"); };
+$("#helpClose").onclick=()=>$("#helpOv").classList.remove("on");
+$$(".overlay").forEach(o=>o.addEventListener("click",e=>{ if(e.target===o) o.classList.remove("on"); }));
+
+function applyLang(){ document.documentElement.lang=lang; $$("[data-i]").forEach(el=>el.innerHTML=t(el.dataset.i)); $("#lang").value=lang;
+  paintToggles(); Object.values(MODS).forEach(m=>m.refresh()); if(MODS[mode]) MODS[mode].dock();
+  if(MODS.hb&&MODS.hb.st) MODS.hb.render(); barTitle(); if(mode==="home") renderHome(); paintGuide();
+  if(mode==="notyet") setMode(SOLO); }
+
+/* ===== 起動 ===== */
+$("#supportLink").href=SUPPORT_URL; $("#verLbl").textContent="45tools · ver "+APP_VER;
+applyLang();
+setMode(SOLO||location.hash.slice(1)||"home");
+if("speechSynthesis" in window){ try{ speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged=()=>{}; }catch(e){} }
+// 公開時刻をまたいだら、ホームを描き直す
+setInterval(()=>{ if(mode==="home") renderHome(); },60000);
+// 新しい版が出たらすぐ使う（プレイ中は勝手に再読み込みしない）
+if("serviceWorker" in navigator && location.protocol==="https:"){
+  navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(reg=>{
+    reg.update().catch(()=>{});
+    document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ reg.update().catch(()=>{}); if(mode==="home") renderHome(); } });
+  }).catch(()=>{});
+  let reloaded=false;
+  navigator.serviceWorker.addEventListener("controllerchange",()=>{ if(reloaded) return; if(!$$('[data-pane][data-v="play"]').length){ reloaded=true; location.reload(); } });
+}
+window.__b={MODS,setMode,GAMES,get mode(){return mode}};
+</script>
+</body>
+</html>

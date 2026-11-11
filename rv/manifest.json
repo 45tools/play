@@ -1,0 +1,22 @@
+{
+ "name": "45 Reversi（リバーシ）",
+ "short_name": "45 Reversi",
+ "start_url": "./",
+ "scope": "../",
+ "display": "standalone",
+ "background_color": "#EEF6FF",
+ "theme_color": "#EEF6FF",
+ "icons": [
+  {
+   "src": "icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any maskable"
+  }
+ ]
+}
