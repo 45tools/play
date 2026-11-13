@@ -86,16 +86,48 @@ const KS={
     const b=Body.create({parts,frictionAir:.05,restitution:.42,friction:.05});
     b.kx={i,type:c.type,W:g.W,L:g.L,g,ox:-b.position.x,oy:-b.position.y}; // 物理の重心と絵の原点のずれ
     Body.setPosition(b,{x:this.DW/2,y:i?this.DH*.25:this.DH*.75}); Body.setAngle(b,(i?Math.PI:0)+(c.rot||0)*Math.PI/180*(i?-1:1)); return b; },
-  // 動かない障害物（セロハンテープ・鉛筆けずり・ふでばこ）を、スタート位置と重ならないように置く
+  // 障害物：渦（相手の後ろへワープ）・ゴムボール（強くはね返す）・スポンジ（勢いを吸いとる）、4つ目からは動かないだけのもの。スタート位置と重ならないように置く
   mkObs(n){ const {Bodies}=Matter,out=[],starts=[{x:this.DW/2,y:this.DH*.75},{x:this.DW/2,y:this.DH*.25}];
-    for(let k=0,tries=0;k<n&&tries<400;tries++){ const kind=["tape","sharp","box"][k%3],x=36+Math.random()*(this.DW-72),y=50+Math.random()*(this.DH-100);
-      if(starts.some(p=>Math.hypot(p.x-x,p.y-y)<(kind==="box"?92:78))) continue; if(out.some(o=>Math.hypot(o.position.x-x,o.position.y-y)<64)) continue;
+    const KIND=["warp","ball","sponge","tape","box","sharp"];
+    for(let k=0,tries=0;k<n&&tries<400;tries++){ const kind=KIND[k%KIND.length],x=36+Math.random()*(this.DW-72),y=50+Math.random()*(this.DH-100);
+      if(starts.some(p=>Math.hypot(p.x-x,p.y-y)<(kind==="box"||kind==="sponge"?92:80))) continue; if(out.some(o=>Math.hypot(o.position.x-x,o.position.y-y)<70)) continue;
       const opt={isStatic:true,restitution:.5,friction:.05}; let b;
-      if(kind==="tape") b=Bodies.circle(x,y,15,opt); else if(kind==="sharp") b=Bodies.rectangle(x,y,24,18,{...opt,angle:Math.random()*Math.PI,chamfer:{radius:3}});
+      if(kind==="warp") b=Bodies.circle(x,y,20,{...opt,isSensor:true});
+      else if(kind==="ball") b=Bodies.circle(x,y,15,{...opt,restitution:1});
+      else if(kind==="sponge") b=Bodies.rectangle(x,y,58,38,{...opt,isSensor:true,angle:Math.random()*Math.PI,chamfer:{radius:8}});
+      else if(kind==="tape") b=Bodies.circle(x,y,15,opt); else if(kind==="sharp") b=Bodies.rectangle(x,y,24,18,{...opt,angle:Math.random()*Math.PI,chamfer:{radius:3}});
       else b=Bodies.rectangle(x,y,60,20,{...opt,angle:Math.random()*Math.PI,chamfer:{radius:6}});
       b.ob=kind; out.push(b); k++; }
     return out; },
-  drawObs(ctx,o,z){ ctx.save(); ctx.translate(o.position.x,o.position.y); ctx.rotate(o.angle);
+  // 障害物のはたらき（毎フレーム）
+  obsFx(){ const st=this.st,{Body,Query}=Matter;
+    st.bodies.forEach(b=>{ if(b.out) return;
+      st.obs.forEach(o=>{
+        if(o.ob==="warp"&&!b.kx.warped&&Math.hypot(b.position.x-o.position.x,b.position.y-o.position.y)<20){
+          const t=st.bodies[1-b.kx.i]; if(t.out) return;
+          let dx=t.position.x-o.position.x,dy=t.position.y-o.position.y,l=Math.hypot(dx,dy)||1; dx/=l; dy/=l;
+          const d=Math.max(t.kx.L,t.kx.W)/2+Math.max(b.kx.L,b.kx.W)/2+8;
+          let nx=t.position.x+dx*d, ny=t.position.y+dy*d; const m=24; nx=Math.max(m,Math.min(this.DW-m,nx)); ny=Math.max(m,Math.min(this.DH-m,ny));
+          Body.setPosition(b,{x:nx,y:ny}); const sp=Math.max(2,b.speed*.6); Body.setVelocity(b,{x:-dx*sp,y:-dy*sp});
+          b.kx.warped=true; st.fx.push({x:o.position.x,y:o.position.y,t:now(),k:"warp"},{x:nx,y:ny,t:now(),k:"warp"}); tone(900,.18,"sine",.12); tone(450,.25,"sine",.1,.08); }
+        else if(o.ob==="sponge"&&Query.collides(b,[o]).length){ Body.setVelocity(b,{x:b.velocity.x*.8,y:b.velocity.y*.8}); Body.setAngularVelocity(b,b.angularVelocity*.75);
+          if(!b.kx.soak){ b.kx.soak=true; tone(160,.15,"sine",.1); } } }); });
+    // ゴムボールに当たったものは、ボールから遠ざかる向きに強く飛ばす
+    (st.boost||[]).forEach(([b,o])=>{ if(b.out) return; let dx=b.position.x-o.position.x,dy=b.position.y-o.position.y,l=Math.hypot(dx,dy)||1;
+      const sp=Math.min(this.VMAX*1.15,Math.max(b.speed*2.2,this.VMAX*.8)); Body.setVelocity(b,{x:dx/l*sp,y:dy/l*sp}); st.fx.push({x:o.position.x,y:o.position.y,t:now(),k:"ball"}); tone(320,.12,"square",.08); });
+    st.boost=[]; },
+  drawObs(ctx,o,z){ const T=now();
+    if(o.ob==="warp"){ ctx.save(); ctx.translate(o.position.x,o.position.y); ctx.rotate(-T/400);
+      const g=ctx.createRadialGradient(0,0,2,0,0,22); g.addColorStop(0,"#2B1B5E"); g.addColorStop(.7,"rgba(124,77,255,.75)"); g.addColorStop(1,"rgba(124,77,255,0)"); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,22,0,7); ctx.fill();
+      ctx.strokeStyle="rgba(255,255,255,.85)"; ctx.lineWidth=2; for(let a=0;a<3;a++){ ctx.beginPath(); for(let s2=0;s2<=24;s2++){ const r=2+s2*.75, th=s2*.32+a*2.09; s2?ctx.lineTo(Math.cos(th)*r,Math.sin(th)*r):ctx.moveTo(Math.cos(th)*r,Math.sin(th)*r); } ctx.stroke(); }
+      ctx.restore(); return; }
+    if(o.ob==="ball"){ ctx.save(); ctx.translate(o.position.x,o.position.y); ctx.fillStyle="rgba(40,20,0,.25)"; ctx.beginPath(); ctx.arc(2.5,3.5,15,0,7); ctx.fill();
+      const g=ctx.createRadialGradient(-5,-6,2,0,0,16); g.addColorStop(0,"#FF9A8A"); g.addColorStop(1,"#E53935"); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,15,0,7); ctx.fill();
+      ctx.strokeStyle="rgba(255,255,255,.6)"; ctx.lineWidth=1.6; ctx.beginPath(); ctx.arc(0,0,15,-.4,1.2); ctx.stroke(); ctx.beginPath(); ctx.moveTo(-15,0); ctx.quadraticCurveTo(0,6,15,0); ctx.stroke(); ctx.restore(); return; }
+    ctx.save(); ctx.translate(o.position.x,o.position.y); ctx.rotate(o.angle);
+    if(o.ob==="sponge"){ ctx.fillStyle="rgba(40,20,0,.2)"; this.rr(ctx,-29+2.5,-19+3.5,58,38,8); ctx.fill(); this.rr(ctx,-29,-19,58,38,8); ctx.fillStyle="#FFE26A"; ctx.fill();
+      ctx.fillStyle="#3FA34D"; ctx.fillRect(-29,9,58,10); ctx.lineWidth=1.5/z; ctx.strokeStyle="#C9A820"; this.rr(ctx,-29,-19,58,38,8); ctx.stroke();
+      ctx.fillStyle="rgba(201,168,32,.55)"; [[-18,-9,3],[-6,-4,2.4],[8,-11,2.8],[18,-3,2.2],[-14,2,2],[3,3,2.6]].forEach(([x,y,r])=>{ ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill(); }); ctx.restore(); return; }
     ctx.fillStyle="rgba(40,20,0,.25)"; if(o.ob==="tape"){ ctx.beginPath(); ctx.arc(2.5,3.5,15,0,7); ctx.fill(); }
     else { const w=o.ob==="box"?60:24,h=o.ob==="box"?20:18; this.rr(ctx,-w/2+2.5,-h/2+3.5,w,h,o.ob==="box"?6:3); ctx.fill(); }
     if(o.ob==="tape"){ ctx.beginPath(); ctx.arc(0,0,15,0,7); ctx.fillStyle="rgba(214,236,255,.92)"; ctx.fill(); ctx.lineWidth=1.5/z; ctx.strokeStyle="#7FA9D6"; ctx.stroke();
@@ -110,7 +142,8 @@ const KS={
     const eng=Matter.Engine.create(); eng.gravity.x=0; eng.gravity.y=0; eng.gravity.scale=0;
     const bodies=[this.mk(0),this.mk(1)], obs=this.mkObs(this.s.obs); Matter.Composite.add(eng.world,bodies.concat(obs));
     this.cols=null; let seed=Math.floor(Math.random()*999);
-    this.st={eng,bodies,obs,cur:0,phase:"aim",turns:0,falling:[],still:0,t0:0,id:Math.random(),arrow:null,seed};
+    this.st={eng,bodies,obs,cur:0,phase:"aim",turns:0,falling:[],still:0,t0:0,id:Math.random(),arrow:null,seed,fx:[],boost:[]};
+    const st0=this.st; Matter.Events.on(eng,"collisionStart",e=>{ e.pairs.forEach(pr=>{ const A=pr.bodyA.parent,B=pr.bodyB.parent; const o=A.ob==="ball"?A:B.ob==="ball"?B:null; if(!o) return; const b=o===A?B:A; if(b.kx) st0.boost.push([b,o]); }); });
     this.view("play"); this.fit(); this.label(); const id=this.st.id;
     const loop=()=>{ if(!this.st||this.st.id!==id) return; if(mode==="kesi"&&this.pane.dataset.v==="play"){ this.update(); this.render(); } requestAnimationFrame(loop); };
     requestAnimationFrame(loop); },
@@ -137,7 +170,7 @@ const KS={
   flick(i,dir,pw,hit){ const st=this.st,b=st.bodies[i],{Body}=Matter; const v=(.15+.85*Math.pow(pw,1.4))*this.VMAX, vel={x:dir.x*v,y:dir.y*v};
     Body.setVelocity(b,vel); const r={x:hit.x-b.position.x,y:hit.y-b.position.y};
     let om=(r.x*vel.y-r.y*vel.x)*b.mass/b.inertia; om=Math.max(-.32,Math.min(.32,om)); Body.setAngularVelocity(b,om);
-    st.phase="move"; st.t0=now(); st.still=0; st.arrow=null; tone(180,.12,"triangle",.2); tone(90,.18,"sine",.2,.02); this.label(); },
+    st.phase="move"; st.t0=now(); st.still=0; st.arrow=null; st.bodies.forEach(x=>{ x.kx.warped=false; x.kx.soak=false; }); tone(180,.12,"triangle",.2); tone(90,.18,"sine",.2,.02); this.label(); },
   cpu(){ const st=this.st,id=st.id; st.phase="cpu"; this.label(); const me=st.bodies[1],tg=st.bodies[0];
     const dx=tg.position.x-me.position.x,dy=tg.position.y-me.position.y,dist=Math.hypot(dx,dy);
     const ang=Math.atan2(dy,dx)+(Math.random()-.5)*.24, dir={x:Math.cos(ang),y:Math.sin(ang)};
@@ -145,7 +178,7 @@ const KS={
     const off=(Math.random()-.5)*.5*me.kx.L/2, hit={x:me.position.x-dir.y*off,y:me.position.y+dir.x*off};
     setTimeout(()=>{ if(!this.st||this.st.id!==id) return; st.arrow={hit,dir,pw,t:now()};
       setTimeout(()=>{ if(!this.st||this.st.id!==id) return; this.flick(1,dir,pw,hit); },650); },650); },
-  update(){ const st=this.st; if(st.phase!=="move") return; Matter.Engine.update(st.eng,1000/60);
+  update(){ const st=this.st; if(st.phase!=="move") return; Matter.Engine.update(st.eng,1000/60); this.obsFx();
     st.bodies.forEach(b=>{ if(b.out) return; const p=b.position; if(p.x<0||p.x>this.DW||p.y<0||p.y>this.DH){
       b.out=true; Matter.Composite.remove(st.eng.world,b); st.falling.push({b,t:now(),v:{x:b.velocity.x,y:b.velocity.y}});
       tone(600,.5,"sine",.12); tone(150,.4,"triangle",.15,.35); $("#ksMsg").innerHTML=`<span class="ngc">${esc(t("ksFall",{name:this.names()[b.kx.i]}))}</span>`; } });
@@ -173,6 +206,7 @@ const KS={
     ctx.lineWidth=4; ctx.strokeStyle=C.edge; this.rr(ctx,0,0,this.DW,this.DH,10); ctx.stroke();
     // 障害物
     st.obs.forEach(o=>this.drawObs(ctx,o,z));
+    st.fx=st.fx.filter(f=>T-f.t<500); st.fx.forEach(f=>{ const k=(T-f.t)/500; ctx.save(); ctx.globalAlpha=1-k; ctx.strokeStyle=f.k==="warp"?"#7C4DFF":"#E53935"; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(f.x,f.y,16+k*30,0,7); ctx.stroke(); ctx.restore(); });
     // 落ちていくもの
     st.falling.forEach(f=>{ const k=Math.min(1,(T-f.t)/550); if(k>=1) return; const b=f.b,sc=1-k*.55;
       ctx.save(); ctx.globalAlpha=1-k; ctx.translate(b.position.x+f.v.x*k*14,b.position.y+f.v.y*k*14); ctx.scale(sc,sc); ctx.translate(-b.position.x,-b.position.y);
