@@ -1,4 +1,4 @@
-const C="play-2026.11.14-1";
+const C="play-2026.11.14-2";
 const FILES=["./", "index.html", "manifest.json", "icon-180.png", "icon-192.png", "icon-512.png", "ira/", "ira/index.html", "games/ira.js", "ira/icon-180.png", "rv/", "rv/index.html", "games/rv.js", "rv/icon-180.png", "kesi/", "kesi/index.html", "games/kesi.js", "kesi/icon-180.png", "lib/matter.min.js"];
 // 入れるときは必ずサーバーから取り直す（端末に残った古い版を使わない）
 self.addEventListener("install",e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(FILES.map(u=>new Request(u,{cache:"reload"})))).catch(()=>{}));self.skipWaiting();});

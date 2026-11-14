@@ -229,14 +229,9 @@ const KS={
       if(st.phase==="aim"&&b.kx.i===st.cur&&!this.isCpuTurn()){ const pulse=.5+.5*Math.sin(T/220); ctx.save(); ctx.strokeStyle=C.p[b.kx.i]; ctx.globalAlpha=.35+.35*pulse; ctx.lineWidth=5/z+3;
         this.outline(ctx,b); ctx.stroke(); ctx.restore(); }
       this.drawBody(ctx,b,z,C); });
-    // 重心と力点
-    if((st.phase==="aim"&&!this.isCpuTurn())||this.drag){ const b=st.bodies[st.cur]; if(!b.out){ const g=b.position,fp=this.drag?this.drag.hit:this.fpW();
-      ctx.save(); ctx.font="700 11px sans-serif"; ctx.textAlign="center"; ctx.lineWidth=1.6;
-      ctx.strokeStyle=C.ink; ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(g.x,g.y,4.5,0,7); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.moveTo(g.x-4.5,g.y); ctx.lineTo(g.x+4.5,g.y); ctx.moveTo(g.x,g.y-4.5); ctx.lineTo(g.x,g.y+4.5); ctx.stroke();
-      ctx.fillStyle=C.ink; ctx.fillText(t("ksCg"),g.x,g.y-9);
-      if(fp){ const col=C.p[st.cur],arm=Math.hypot(fp.x-g.x,fp.y-g.y); ctx.setLineDash([3,3]); ctx.strokeStyle=C.ink; ctx.beginPath(); ctx.moveTo(g.x,g.y); ctx.lineTo(fp.x,fp.y); ctx.stroke(); ctx.setLineDash([]);
-        ctx.strokeStyle=col; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(fp.x-5,fp.y-5); ctx.lineTo(fp.x+5,fp.y+5); ctx.moveTo(fp.x+5,fp.y-5); ctx.lineTo(fp.x-5,fp.y+5); ctx.stroke();
-        ctx.fillStyle=C.ink; ctx.fillText(t("ksFp")+" "+t("ksArm",{d:Math.round(arm)}),fp.x,fp.y+18); } ctx.restore(); } }
+    // 力点
+    if((st.phase==="aim"&&!this.isCpuTurn())||this.drag){ const b=st.bodies[st.cur],fp=this.drag?this.drag.hit:this.fpW(); if(!b.out&&fp){ const col=C.p[st.cur];
+      ctx.save(); ctx.lineWidth=3; ctx.strokeStyle=col; ctx.beginPath(); ctx.moveTo(fp.x-5,fp.y-5); ctx.lineTo(fp.x+5,fp.y+5); ctx.moveTo(fp.x+5,fp.y-5); ctx.lineTo(fp.x-5,fp.y+5); ctx.stroke(); ctx.restore(); } }
     // 矢印
     let A=null; if(this.drag){ const d=this.drag,dx=d.c.x-d.s.x,dy=d.c.y-d.s.y,len=Math.hypot(dx,dy); if(len>4) A={hit:d.hit,dir:{x:dx/len,y:dy/len},pw:Math.min(len,this.DRAG)/this.DRAG}; }
     else if(st.arrow&&st.phase==="cpu"){ const k=Math.min(1,(T-st.arrow.t)/500); A={...st.arrow,pw:st.arrow.pw*k}; }
