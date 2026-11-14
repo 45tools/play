@@ -14,7 +14,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 S = lambda *p: os.path.join(ROOT, *p)
 
 GAMES = [  # id, 英語名（ホーム画面の名前）, 日本語名, 説明
-    ("ira", "Steady", "イライラ棒", "かべにふれないように玉をゴールへ。スマホを傾けて、体を動かして遊べます。"),
+    ("ira", "Steady", "イライラボール", "かべにふれないように玉をゴールへ。スマホを傾けて、体を動かして遊べます。"),
     ("rv", "Reversi", "リバーシ", "1台で2人対戦、CPU（3段階）とも対戦できるリバーシ。"),
     ("kesi", "Flick", "消しゴムおとし", "スワイプで消しゴムを飛ばして、相手を机から落とす。"),
 ]

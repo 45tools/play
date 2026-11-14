@@ -1,10 +1,10 @@
 // 45 Brain ゲーム：kesi（開いたときだけ読み込まれる。共通の関数は index.html にある）
-BRAIN.def("kesi","  <section data-pane=\"kesi\" data-v=\"setup\">\n    <div class=\"vw\" data-v=\"setup\">\n      <div class=\"panel\">\n        <h2 data-i=\"ksTitle\"></h2>\n        <p class=\"lead\" data-i=\"ksLead\"></p>\n        <div class=\"opt\"><span class=\"ol\" data-i=\"ksVs\"></span><div class=\"chips\" id=\"ksVsSel\">\n          <button class=\"chip\" data-val=\"cpu\" data-i=\"ksVsCpu\"></button><button class=\"chip\" data-val=\"two\" data-i=\"ksVsTwo\"></button></div></div>\n        <div class=\"opt\"><span class=\"ol\" data-i=\"ksObs\"></span><div class=\"chips\" id=\"ksObsSel\">\n          <button class=\"chip num\" data-val=\"0\">0</button><button class=\"chip num\" data-val=\"1\">1</button><button class=\"chip num\" data-val=\"2\">2</button><button class=\"chip num\" data-val=\"3\">3</button><button class=\"chip num\" data-val=\"4\">4</button><button class=\"chip num\" data-val=\"5\">5</button><button class=\"chip num\" data-val=\"6\">6</button></div></div>\n        <p class=\"lead\" style=\"margin-top:6px\" data-i=\"ksObsNote\"></p>\n      </div>\n      <div class=\"panel kpl kcol0\" id=\"ksP0\">\n        <h3><i class=\"kdot\"></i><span class=\"kname\"></span></h3>\n        <div class=\"chips ktype\"><button class=\"chip\" data-val=\"eraser\" data-i=\"ksEraser\"></button><button class=\"chip\" data-val=\"ruler\" data-i=\"ksRuler\"></button></div>\n        <canvas class=\"kprev\" id=\"ksPrev0\"></canvas>\n        <div class=\"karea\"></div>\n        <label class=\"krow\"><span data-i=\"ksLen\"></span><input type=\"range\" class=\"kf\" id=\"ksF0\" min=\"60\" max=\"160\" step=\"1\"></label>\n        <label class=\"krow\"><span data-i=\"ksBend\"></span><input type=\"range\" class=\"kb\" id=\"ksB0\" min=\"0\" max=\"180\" step=\"5\"></label>\n        <label class=\"krow\"><span data-i=\"ksRot\"></span><input type=\"range\" class=\"kr\" id=\"ksR0\" min=\"0\" max=\"165\" step=\"15\"></label>\n        <button class=\"btn kreset\"><i class=\"ic\" data-ic=\"repeat\"></i><span data-i=\"ksReset\"></span></button>\n      </div>\n      <div class=\"panel kpl kcol1\" id=\"ksP1\">\n        <h3><i class=\"kdot\"></i><span class=\"kname\"></span></h3>\n        <div class=\"chips ktype\"><button class=\"chip\" data-val=\"eraser\" data-i=\"ksEraser\"></button><button class=\"chip\" data-val=\"ruler\" data-i=\"ksRuler\"></button></div>\n        <canvas class=\"kprev\" id=\"ksPrev1\"></canvas>\n        <div class=\"karea\"></div>\n        <label class=\"krow\"><span data-i=\"ksLen\"></span><input type=\"range\" class=\"kf\" id=\"ksF1\" min=\"60\" max=\"160\" step=\"1\"></label>\n        <label class=\"krow\"><span data-i=\"ksBend\"></span><input type=\"range\" class=\"kb\" id=\"ksB1\" min=\"0\" max=\"180\" step=\"5\"></label>\n        <label class=\"krow\"><span data-i=\"ksRot\"></span><input type=\"range\" class=\"kr\" id=\"ksR1\" min=\"0\" max=\"165\" step=\"15\"></label>\n        <button class=\"btn kreset\"><i class=\"ic\" data-ic=\"repeat\"></i><span data-i=\"ksReset\"></span></button>\n      </div>\n      <div class=\"panel\">\n        <h2 data-i=\"recTitle\"></h2>\n        <div class=\"best\"><i class=\"ic\" data-ic=\"trophy\"></i><span data-i=\"ksRecL\"></span><b class=\"num\" id=\"ksRec\"></b></div>\n      </div>\n    </div>\n    <div class=\"vw\" data-v=\"play\">\n      <div class=\"phead\"><button class=\"btn icon\" id=\"ksQuit\" aria-label=\"quit\"><i class=\"ic\" data-ic=\"x\"></i></button><b class=\"kturn\" id=\"ksTurn\"></b></div>\n      <div class=\"kbox\" id=\"ksBox\"><canvas id=\"ksCv\"></canvas></div>\n      <div class=\"banner\" id=\"ksMsg\"></div>\n    </div>\n  </section>",function(){
+BRAIN.def("kesi","  <section data-pane=\"kesi\" data-v=\"setup\">\n    <div class=\"vw\" data-v=\"setup\">\n      <div class=\"panel\">\n        <h2 data-i=\"ksTitle\"></h2>\n        <p class=\"lead\" data-i=\"ksLead\"></p>\n        <div class=\"opt\"><span class=\"ol\" data-i=\"ksVs\"></span><div class=\"chips\" id=\"ksVsSel\">\n          <button class=\"chip\" data-val=\"cpu\" data-i=\"ksVsCpu\"></button><button class=\"chip\" data-val=\"two\" data-i=\"ksVsTwo\"></button></div></div>\n        <div class=\"opt\"><span class=\"ol\" data-i=\"ksMu\"></span><div class=\"chips\" id=\"ksMuSel\">\n          <button class=\"chip\" data-val=\"0.1\"><span data-i=\"ksMu1\"></span> μ0.1</button><button class=\"chip\" data-val=\"0.3\"><span data-i=\"ksMu2\"></span> μ0.3</button><button class=\"chip\" data-val=\"0.6\"><span data-i=\"ksMu3\"></span> μ0.6</button></div></div>\n        <p class=\"lead\" style=\"margin-top:0\" data-i=\"ksMuNote\"></p>\n        <div class=\"opt\"><span class=\"ol\" data-i=\"ksObs\"></span><div class=\"chips\" id=\"ksObsSel\">\n          <button class=\"chip num\" data-val=\"0\">0</button><button class=\"chip num\" data-val=\"1\">1</button><button class=\"chip num\" data-val=\"2\">2</button><button class=\"chip num\" data-val=\"3\">3</button><button class=\"chip num\" data-val=\"4\">4</button><button class=\"chip num\" data-val=\"5\">5</button><button class=\"chip num\" data-val=\"6\">6</button></div></div>\n        <p class=\"lead\" style=\"margin-top:6px\" data-i=\"ksObsNote\"></p>\n      </div>\n      <div class=\"panel kpl kcol0\" id=\"ksP0\">\n        <h3><i class=\"kdot\"></i><span class=\"kname\"></span></h3>\n        <div class=\"chips ktype\"><button class=\"chip\" data-val=\"eraser\" data-i=\"ksEraser\"></button><button class=\"chip\" data-val=\"ruler\" data-i=\"ksRuler\"></button></div>\n        <canvas class=\"kprev\" id=\"ksPrev0\"></canvas>\n        <div class=\"karea\"></div>\n        <label class=\"krow\"><span data-i=\"ksLen\"></span><input type=\"range\" class=\"kf\" id=\"ksF0\" min=\"60\" max=\"160\" step=\"1\"></label>\n        <label class=\"krow\"><span data-i=\"ksBend\"></span><input type=\"range\" class=\"kb\" id=\"ksB0\" min=\"0\" max=\"180\" step=\"5\"></label>\n        <label class=\"krow\"><span data-i=\"ksRot\"></span><input type=\"range\" class=\"kr\" id=\"ksR0\" min=\"0\" max=\"165\" step=\"15\"></label>\n        <button class=\"btn kreset\"><i class=\"ic\" data-ic=\"repeat\"></i><span data-i=\"ksReset\"></span></button>\n      </div>\n      <div class=\"panel kpl kcol1\" id=\"ksP1\">\n        <h3><i class=\"kdot\"></i><span class=\"kname\"></span></h3>\n        <div class=\"chips ktype\"><button class=\"chip\" data-val=\"eraser\" data-i=\"ksEraser\"></button><button class=\"chip\" data-val=\"ruler\" data-i=\"ksRuler\"></button></div>\n        <canvas class=\"kprev\" id=\"ksPrev1\"></canvas>\n        <div class=\"karea\"></div>\n        <label class=\"krow\"><span data-i=\"ksLen\"></span><input type=\"range\" class=\"kf\" id=\"ksF1\" min=\"60\" max=\"160\" step=\"1\"></label>\n        <label class=\"krow\"><span data-i=\"ksBend\"></span><input type=\"range\" class=\"kb\" id=\"ksB1\" min=\"0\" max=\"180\" step=\"5\"></label>\n        <label class=\"krow\"><span data-i=\"ksRot\"></span><input type=\"range\" class=\"kr\" id=\"ksR1\" min=\"0\" max=\"165\" step=\"15\"></label>\n        <button class=\"btn kreset\"><i class=\"ic\" data-ic=\"repeat\"></i><span data-i=\"ksReset\"></span></button>\n      </div>\n      <div class=\"panel\">\n        <h2 data-i=\"recTitle\"></h2>\n        <div class=\"best\"><i class=\"ic\" data-ic=\"trophy\"></i><span data-i=\"ksRecL\"></span><b class=\"num\" id=\"ksRec\"></b></div>\n      </div>\n    </div>\n    <div class=\"vw\" data-v=\"play\">\n      <div class=\"phead\"><button class=\"btn icon\" id=\"ksQuit\" aria-label=\"quit\"><i class=\"ic\" data-ic=\"x\"></i></button><b class=\"kturn\" id=\"ksTurn\"></b></div>\n      <div class=\"kbox\" id=\"ksBox\"><canvas id=\"ksCv\"></canvas></div>\n      <div class=\"banner\" id=\"ksMsg\"></div>\n    </div>\n  </section>",function(){
 /* =========================================================
    消しゴムおとし（matter-js）
    ========================================================= */
 const KS={
-  s:(()=>{ const d={vs:"cpu",obs:2,p:[{type:"eraser",f:100,bend:0,rot:0},{type:"eraser",f:100,bend:0,rot:0}]}; const v=store.get("b_ks",null); if(!(v&&v.p&&v.p.length===2)) return d; if(v.obs==null) v.obs=2; v.p.forEach(x=>{ if(x.rot==null) x.rot=0; }); return v; })(),
+  s:(()=>{ const d={vs:"cpu",obs:2,mu:.3,p:[{type:"eraser",f:100,bend:0,rot:0},{type:"eraser",f:100,bend:0,rot:0}]}; const v=store.get("b_ks",null); if(!(v&&v.p&&v.p.length===2)) return d; if(v.obs==null) v.obs=2; if(v.mu==null) v.mu=.3; v.p.forEach(x=>{ if(x.rot==null) x.rot=0; }); return v; })(),
   BASE:{eraser:{L:44,W:22},ruler:{L:150,W:13}}, // mm
   DW:320,DH:460,M:20,VMAX:13,DRAG:150,
   st:null,rf:[],drag:null,
@@ -12,6 +12,7 @@ const KS={
   init(){
     this.pane=$('[data-pane="kesi"]');
     this.rf.push(chips($("#ksVsSel"),()=>this.s.vs,v=>{this.s.vs=v;this.save()},()=>this.refresh()));
+    this.rf.push(chips($("#ksMuSel"),()=>String(this.s.mu),v=>{this.s.mu=+v;this.save()}));
     this.rf.push(chips($("#ksObsSel"),()=>this.s.obs,v=>{this.s.obs=+v;this.save()}));
     [0,1].forEach(i=>{ const box=$(`#ksP${i}`),P=this.s.p[i];
       this.rf.push(chips($(".ktype",box),()=>this.s.p[i].type,v=>{this.s.p[i].type=v;this.save()},()=>this.refresh()));
@@ -83,7 +84,7 @@ const KS={
   act(a){ if(a==="start") this.start(); },
   mk(i){ const {Bodies,Body}=Matter, c=this.s.p[i], g=this.geom(c);
     const parts=g.segs.map(q=>Bodies.rectangle(q.x,q.y,q.len,g.W,{angle:q.a,density:.0012,chamfer:{radius:Math.min(2,g.W/4)}}));
-    const b=Body.create({parts,frictionAir:.05,restitution:.42,friction:.05});
+    const b=Body.create({parts,frictionAir:0,restitution:.42,friction:.05});
     b.kx={i,type:c.type,W:g.W,L:g.L,g,ox:-b.position.x,oy:-b.position.y}; // 物理の重心と絵の原点のずれ
     Body.setPosition(b,{x:this.DW/2,y:i?this.DH*.25:this.DH*.75}); Body.setAngle(b,(i?Math.PI:0)+(c.rot||0)*Math.PI/180*(i?-1:1)); return b; },
   // 障害物：渦（相手の後ろへワープ）・ゴムボール（強くはね返す）・スポンジ（勢いを吸いとる）、4つ目からは動かないだけのもの。スタート位置と重ならないように置く
@@ -116,6 +117,15 @@ const KS={
     (st.boost||[]).forEach(([b,o])=>{ if(b.out) return; let dx=b.position.x-o.position.x,dy=b.position.y-o.position.y,l=Math.hypot(dx,dy)||1;
       const sp=Math.min(this.VMAX*1.15,Math.max(b.speed*2.2,this.VMAX*.8)); Body.setVelocity(b,{x:dx/l*sp,y:dy/l*sp}); st.fx.push({x:o.position.x,y:o.position.y,t:now(),k:"ball"}); tone(320,.12,"square",.08); });
     st.boost=[]; },
+  // 床の動摩擦：速さに関係なく一定の減速（a=μg）。すべる距離は v²/(2μg)
+  G:1.1,
+  floorFric(){ const {Body}=Matter,a=this.s.mu*this.G;
+    this.st.bodies.forEach(b=>{ if(b.out) return; const sp=b.speed; if(sp>0){ const k=Math.max(0,sp-a)/sp; Body.setVelocity(b,{x:b.velocity.x*k,y:b.velocity.y*k}); }
+      const w=b.angularVelocity, da=a/(.3*Math.max(b.kx.L,b.kx.W)); Body.setAngularVelocity(b,Math.abs(w)<=da?0:w-Math.sign(w)*da); }); },
+  // 力点：コマの上の位置をコマの座標で覚える（コマが動いても同じ場所）
+  toLocal(b,w){ const c=Math.cos(-b.angle),s2=Math.sin(-b.angle),x=w.x-b.position.x,y=w.y-b.position.y; return {x:x*c-y*s2,y:x*s2+y*c}; },
+  toW(b,l){ const c=Math.cos(b.angle),s2=Math.sin(b.angle); return {x:b.position.x+l.x*c-l.y*s2,y:b.position.y+l.x*s2+l.y*c}; },
+  fpW(){ const st=this.st,b=st.bodies[st.cur],l=st.fp&&st.fp[st.cur]; return l?this.toW(b,l):null; },
   drawObs(ctx,o,z){ const T=now();
     if(o.ob==="warp"){ ctx.save(); ctx.translate(o.position.x,o.position.y); ctx.rotate(-T/400);
       const g=ctx.createRadialGradient(0,0,2,0,0,22); g.addColorStop(0,"#2B1B5E"); g.addColorStop(.7,"rgba(124,77,255,.75)"); g.addColorStop(1,"rgba(124,77,255,0)"); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(0,0,22,0,7); ctx.fill();
@@ -142,7 +152,7 @@ const KS={
     const eng=Matter.Engine.create(); eng.gravity.x=0; eng.gravity.y=0; eng.gravity.scale=0;
     const bodies=[this.mk(0),this.mk(1)], obs=this.mkObs(this.s.obs); Matter.Composite.add(eng.world,bodies.concat(obs));
     this.cols=null; let seed=Math.floor(Math.random()*999);
-    this.st={eng,bodies,obs,cur:0,phase:"aim",turns:0,falling:[],still:0,t0:0,id:Math.random(),arrow:null,seed,fx:[],boost:[]};
+    this.st={eng,bodies,obs,cur:0,phase:"aim",turns:0,falling:[],still:0,t0:0,id:Math.random(),arrow:null,seed,fx:[],boost:[],fp:[null,null]};
     const st0=this.st; Matter.Events.on(eng,"collisionStart",e=>{ e.pairs.forEach(pr=>{ const A=pr.bodyA.parent,B=pr.bodyB.parent; const o=A.ob==="ball"?A:B.ob==="ball"?B:null; if(!o) return; const b=o===A?B:A; if(b.kx) st0.boost.push([b,o]); }); });
     this.view("play"); this.fit(); this.label(); const id=this.st.id;
     const loop=()=>{ if(!this.st||this.st.id!==id) return; if(mode==="kesi"&&this.pane.dataset.v==="play"){ this.update(); this.render(); } requestAnimationFrame(loop); };
@@ -161,16 +171,17 @@ const KS={
     const inside=b.parts.slice(1).some(p=>Matter.Vertices.contains(p.vertices,w));
     const near=Math.hypot(w.x-b.position.x,w.y-b.position.y)<Math.max(b.kx.L,b.kx.W)/2+36;
     if(!inside&&!near){ toast(t("ksTouchOwn")); return; }
-    this.drag={pid:e.pointerId,s:w,c:w,hit:inside?w:{x:b.position.x,y:b.position.y}}; try{ $("#ksCv").setPointerCapture(e.pointerId); }catch(_){}
+    const fp=this.fpW(); if(inside) st.fp[st.cur]=this.toLocal(b,w);
+    this.drag={pid:e.pointerId,s:w,c:w,hit:inside?w:(fp||{x:b.position.x,y:b.position.y}),tap:inside}; try{ $("#ksCv").setPointerCapture(e.pointerId); }catch(_){}
     e.preventDefault(); },
   pmove(e){ if(this.drag&&e.pointerId===this.drag.pid) this.drag.c=this.toWorld(e); },
   pup(e){ const d=this.drag; if(!d||e.pointerId!==d.pid) return; this.drag=null; d.c=this.toWorld(e);
-    const dx=d.c.x-d.s.x,dy=d.c.y-d.s.y,len=Math.hypot(dx,dy); if(len<10) return;
+    const dx=d.c.x-d.s.x,dy=d.c.y-d.s.y,len=Math.hypot(dx,dy); if(len<10){ if(d.tap){ tone(700,.06,"sine",.08); } return; }
     this.flick(this.st.cur,{x:dx/len,y:dy/len},Math.min(len,this.DRAG)/this.DRAG,d.hit); },
   flick(i,dir,pw,hit){ const st=this.st,b=st.bodies[i],{Body}=Matter; const v=(.15+.85*Math.pow(pw,1.4))*this.VMAX, vel={x:dir.x*v,y:dir.y*v};
     Body.setVelocity(b,vel); const r={x:hit.x-b.position.x,y:hit.y-b.position.y};
     let om=(r.x*vel.y-r.y*vel.x)*b.mass/b.inertia; om=Math.max(-.32,Math.min(.32,om)); Body.setAngularVelocity(b,om);
-    st.phase="move"; st.t0=now(); st.still=0; st.arrow=null; st.bodies.forEach(x=>{ x.kx.warped=false; x.kx.soak=false; }); tone(180,.12,"triangle",.2); tone(90,.18,"sine",.2,.02); this.label(); },
+    st.p0={i,x:b.position.x,y:b.position.y}; st.phase="move"; st.t0=now(); st.still=0; st.arrow=null; st.bodies.forEach(x=>{ x.kx.warped=false; x.kx.soak=false; }); tone(180,.12,"triangle",.2); tone(90,.18,"sine",.2,.02); this.label(); },
   cpu(){ const st=this.st,id=st.id; st.phase="cpu"; this.label(); const me=st.bodies[1],tg=st.bodies[0];
     const dx=tg.position.x-me.position.x,dy=tg.position.y-me.position.y,dist=Math.hypot(dx,dy);
     const ang=Math.atan2(dy,dx)+(Math.random()-.5)*.24, dir={x:Math.cos(ang),y:Math.sin(ang)};
@@ -178,7 +189,7 @@ const KS={
     const off=(Math.random()-.5)*.5*me.kx.L/2, hit={x:me.position.x-dir.y*off,y:me.position.y+dir.x*off};
     setTimeout(()=>{ if(!this.st||this.st.id!==id) return; st.arrow={hit,dir,pw,t:now()};
       setTimeout(()=>{ if(!this.st||this.st.id!==id) return; this.flick(1,dir,pw,hit); },650); },650); },
-  update(){ const st=this.st; if(st.phase!=="move") return; Matter.Engine.update(st.eng,1000/60); this.obsFx();
+  update(){ const st=this.st; if(st.phase!=="move") return; Matter.Engine.update(st.eng,1000/60); this.obsFx(); this.floorFric();
     st.bodies.forEach(b=>{ if(b.out) return; const p=b.position; if(p.x<0||p.x>this.DW||p.y<0||p.y>this.DH){
       b.out=true; Matter.Composite.remove(st.eng.world,b); st.falling.push({b,t:now(),v:{x:b.velocity.x,y:b.velocity.y}});
       tone(600,.5,"sine",.12); tone(150,.4,"triangle",.15,.35); $("#ksMsg").innerHTML=`<span class="ngc">${esc(t("ksFall",{name:this.names()[b.kx.i]}))}</span>`; } });
@@ -186,6 +197,7 @@ const KS={
     st.still=moving?0:st.still+1; if(st.still>14||now()-st.t0>9000) this.endTurn(); },
   endTurn(){ const st=this.st; st.turns++; st.phase="wait";
     const alive=st.bodies.map(b=>!b.out); if(!alive[0]||!alive[1]) return this.over(alive);
+    if(st.p0){ const b=st.bodies[st.p0.i],dd=Math.hypot(b.position.x-st.p0.x,b.position.y-st.p0.y); if(dd>3) toast(t("ksSlid",{name:this.names()[st.p0.i],d:(dd/10).toFixed(1),mu:this.s.mu})); }
     st.cur=1-st.cur; st.phase="aim"; this.label(); if(this.isCpuTurn()) this.cpu(); },
   over(alive){ const st=this.st,id=st.id,N=this.names(); st.phase="over";
     const win=alive[0]&&!alive[1]?0:alive[1]&&!alive[0]?1:-1;
@@ -217,6 +229,14 @@ const KS={
       if(st.phase==="aim"&&b.kx.i===st.cur&&!this.isCpuTurn()){ const pulse=.5+.5*Math.sin(T/220); ctx.save(); ctx.strokeStyle=C.p[b.kx.i]; ctx.globalAlpha=.35+.35*pulse; ctx.lineWidth=5/z+3;
         this.outline(ctx,b); ctx.stroke(); ctx.restore(); }
       this.drawBody(ctx,b,z,C); });
+    // 重心と力点
+    if((st.phase==="aim"&&!this.isCpuTurn())||this.drag){ const b=st.bodies[st.cur]; if(!b.out){ const g=b.position,fp=this.drag?this.drag.hit:this.fpW();
+      ctx.save(); ctx.font="700 11px sans-serif"; ctx.textAlign="center"; ctx.lineWidth=1.6;
+      ctx.strokeStyle=C.ink; ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(g.x,g.y,4.5,0,7); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.moveTo(g.x-4.5,g.y); ctx.lineTo(g.x+4.5,g.y); ctx.moveTo(g.x,g.y-4.5); ctx.lineTo(g.x,g.y+4.5); ctx.stroke();
+      ctx.fillStyle=C.ink; ctx.fillText(t("ksCg"),g.x,g.y-9);
+      if(fp){ const col=C.p[st.cur],arm=Math.hypot(fp.x-g.x,fp.y-g.y); ctx.setLineDash([3,3]); ctx.strokeStyle=C.ink; ctx.beginPath(); ctx.moveTo(g.x,g.y); ctx.lineTo(fp.x,fp.y); ctx.stroke(); ctx.setLineDash([]);
+        ctx.strokeStyle=col; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(fp.x-5,fp.y-5); ctx.lineTo(fp.x+5,fp.y+5); ctx.moveTo(fp.x+5,fp.y-5); ctx.lineTo(fp.x-5,fp.y+5); ctx.stroke();
+        ctx.fillStyle=C.ink; ctx.fillText(t("ksFp")+" "+t("ksArm",{d:Math.round(arm)}),fp.x,fp.y+18); } ctx.restore(); } }
     // 矢印
     let A=null; if(this.drag){ const d=this.drag,dx=d.c.x-d.s.x,dy=d.c.y-d.s.y,len=Math.hypot(dx,dy); if(len>4) A={hit:d.hit,dir:{x:dx/len,y:dy/len},pw:Math.min(len,this.DRAG)/this.DRAG}; }
     else if(st.arrow&&st.phase==="cpu"){ const k=Math.min(1,(T-st.arrow.t)/500); A={...st.arrow,pw:st.arrow.pw*k}; }
