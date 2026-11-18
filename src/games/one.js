@@ -10,6 +10,8 @@ BRAIN.def("one",`
       <div class="opt"><span class="ol" data-i="onStyle"></span><div class="chips" id="onStSel">
         <button class="chip" data-val="plain" data-i="onPlain"></button><button class="chip" data-val="noise" data-i="onNoise"></button><button class="chip" data-val="move" data-i="onMove"></button></div></div>
       <p class="lead" style="margin-top:0" id="onStNote"></p>
+      <div class="opt" id="onLpOpt"><span class="ol" data-i="onLap"></span><div class="chips" id="onLpSel">
+        <button class="chip" data-val="on" data-i="onLapOn"></button><button class="chip" data-val="off" data-i="onLapOff"></button></div></div>
       <div class="opt" id="onNzOpt"><span class="ol" data-i="onNz"></span><div class="chips" id="onNzSel">
         <button class="chip" data-val="1" data-i="onNz1"></button><button class="chip" data-val="2" data-i="onNz2"></button><button class="chip" data-val="3" data-i="onNz3"></button></div></div>
       <div class="opt"><span class="ol" data-i="onPlayers"></span><div class="chips" id="onPlSel">
@@ -56,7 +58,7 @@ BRAIN.def("one",`
    1分体感：時計を見ずに、決めた時間ぴったりでストップ
    ========================================================= */
 const ONE={
-  s:Object.assign({tg:"60",st:"plain",pl:"1",nz:"2",tn:"turn",ru:"near"},store.get("p_one",{})),
+  s:Object.assign({tg:"60",st:"plain",pl:"1",nz:"2",tn:"turn",ru:"near",lp:"on"},store.get("p_one",{})),
   fx:0,
   st:null,rf:[],nt:0,
   save(){ store.set("p_one",this.s); },
@@ -66,6 +68,7 @@ const ONE={
     this.rf.push(chips($("#onTgSel"),()=>this.s.tg,v=>{this.s.tg=v;this.save()},()=>this.refresh()));
     this.rf.push(chips($("#onStSel"),()=>this.s.st,v=>{this.s.st=v;this.save()},()=>this.refresh()));
     this.rf.push(chips($("#onPlSel"),()=>this.s.pl,v=>{this.s.pl=v;this.save()},()=>this.refresh()));
+    this.rf.push(chips($("#onLpSel"),()=>this.s.lp,v=>{this.s.lp=v;this.save()},()=>this.refresh()));
     this.rf.push(chips($("#onNzSel"),()=>this.s.nz,v=>{this.s.nz=v;this.save()}));
     this.rf.push(chips($("#onTnSel"),()=>this.s.tn,v=>{this.s.tn=v;this.save()},()=>this.refresh()));
     this.rf.push(chips($("#onRuSel"),()=>this.s.ru,v=>{this.s.ru=v;this.save()},()=>this.refresh()));
@@ -74,11 +77,11 @@ const ONE={
     this.refresh();
   },
   CP:{10:[3,6,10],30:[10,20,30],60:[20,40,60],180:[60,120,180]},
-  useLaps(){ const st=this.st; return st.style==="plain"&&!st.tog; },
+  useLaps(){ const st=this.st; return st.lp&&!st.tog; },
   secLbl(x){ return x<60?x+t("onSecU"):t("onMinOnly",{m:x/60}); },
   tgLbl(v){ return t({10:"onS10",30:"onS30",60:"onS60",180:"onS180"}[v]); },
   refresh(){ this.rf.forEach(f=>f()); $("#onStNote").innerHTML=t({plain:"onPlainN",noise:"onNoiseN",move:"onMoveN"}[this.s.st]);
-    $("#onNzOpt").style.display=this.s.st==="noise"?"":"none"; $("#onTnOpt").style.display=this.s.pl!=="1"?"":"none";
+    $("#onNzOpt").style.display=this.s.st==="noise"?"":"none"; $("#onLpOpt").style.display=(this.s.pl!=="1"&&this.s.tn==="tog")?"none":""; $("#onTnOpt").style.display=this.s.pl!=="1"?"":"none";
     $("#onRuNote").innerHTML=t(this.s.ru==="doban"?"onRuDobanN":"onRuNearN");
     const rec=store.get("p_one_rec",{});
     $("#onRec").innerHTML=["10","30","60","180"].map(k=>{ const r=rec[k]; return `<div><b>${r?esc(this.fmtD(r.d)):"—"}</b><span>${esc(this.tgLbl(k))}</span></div>`; }).join("")+
@@ -95,7 +98,7 @@ const ONE={
     else if(a==="next"){ if(st.i<st.n-1){ st.i++; this.ready(); } else if(st.n>1) this.roundRank(); else this.finish(); }
     else if(a==="round"){ st.rd++; st.i=0; st.res=[]; this.ready(); }
     else if(a==="end") this.finish(); },
-  start(){ const n=+this.s.pl; this.st={i:0,n,rd:1,tg:+this.s.tg,style:this.s.st,nz:+this.s.nz,doban:this.s.ru==="doban",tog:n>1&&this.s.tn==="tog",res:[],tot:Array(n).fill(0),wins:Array(n).fill(0)}; this.view("play"); this.ready(); },
+  start(){ const n=+this.s.pl; this.st={i:0,n,rd:1,tg:+this.s.tg,style:this.s.st,nz:+this.s.nz,doban:this.s.ru==="doban",lp:this.s.lp==="on",tog:n>1&&this.s.tn==="tog",res:[],tot:Array(n).fill(0),wins:Array(n).fill(0)}; this.view("play"); this.ready(); },
   key(x){ return (this.st.doban&&x.diff>0?1e6:0)+x.ad; },
   dob(x){ return this.st.doban&&x.diff>0; },
   // 1周ごとの順位発表（この周の差と、ここまでの合計の差）
@@ -127,21 +130,30 @@ const ONE={
       this.noise(false); this.stop(ms); }
     if(st.phase==="round") return; },
   // じゃまあり：ふざけた「ぷっ」音を不規則なリズムで鳴らす（数えるリズムを崩す）
-  fart(){ if(!store.get("b_snd",true)) return; const a=ac(); if(!a) return;
-    try{ const t0=a.currentTime,d=.18+Math.random()*.5,f0=70+Math.random()*90;
-      const o=a.createOscillator(),g=a.createGain(),lf=a.createOscillator(),lg=a.createGain(),fl=a.createBiquadFilter();
-      o.type="sawtooth"; o.frequency.setValueAtTime(f0*1.4,t0); o.frequency.exponentialRampToValueAtTime(f0*.6,t0+d);
-      lf.type="square"; lf.frequency.value=18+Math.random()*25; lg.gain.value=f0*.5; lf.connect(lg); lg.connect(o.frequency);
-      fl.type="lowpass"; fl.frequency.value=500+Math.random()*500; fl.Q.value=4;
-      g.gain.setValueAtTime(.0001,t0); g.gain.exponentialRampToValueAtTime(.35,t0+.02); g.gain.setValueAtTime(.3,t0+d*.7); g.gain.exponentialRampToValueAtTime(.0001,t0+d);
-      o.connect(fl); fl.connect(g); g.connect(a.destination); o.start(t0); lf.start(t0); o.stop(t0+d+.05); lf.stop(t0+d+.05); }catch(e){} },
-  fartLoop(){ clearTimeout(this.fx); const go=()=>{ this.fart(); if(Math.random()<.3) setTimeout(()=>this.fart(),120+Math.random()*200); this.fx=setTimeout(go,500+Math.random()*2800); }; this.fx=setTimeout(go,300+Math.random()*1500); },
-  multi(){ const st=this.st,box=$("#onMulti"); st.tres=Array(st.n).fill(null); box.className="onmulti on";
-    box.innerHTML=Array.from({length:st.n},(_,i)=>`<button type="button" data-p="${i}">${esc(t("onPlayerN",{n:i+1}))}</button>`).join("");
-    $$("button",box).forEach(b=>b.addEventListener("pointerdown",e=>{ e.preventDefault(); const i=+b.dataset.p; if(st.phase!=="run"||st.tres[i]) return;
-      const ms=now()-st.t0; if(ms<400) return; const diff=(ms-st.tg*1000)/1000; st.tres[i]={ms,ad:Math.abs(diff),diff}; b.classList.add("done"); b.textContent=t("onPlayerN",{n:i+1})+" ✓"; sfx.tap();
-      if(st.tres.every(Boolean)){ this.noise(false); st.res=st.tres; st.res.forEach((x,k)=>st.tot[k]+=x.ad); $("#onMulti").className="onmulti"; this.roundRank(); } })); },
-  voice(){ try{ const ss=window.speechSynthesis; if(!ss) return; const u=new SpeechSynthesisUtterance(String(1+rnd(59))); u.lang=lang==="ja"?"ja-JP":lang==="en"?"en-US":"zh-TW"; u.rate=.9+Math.random()*.6; ss.speak(u); }catch(e){} },
+  // じゃまあり：長さがバラバラの「ぷっ」と、いろいろなへんな音を不規則に鳴らす
+  snd(fn){ if(!store.get("b_snd",true)) return; const a=ac(); if(!a) return; try{ fn(a,a.currentTime); }catch(e){} },
+  osc(a,t0,type,f1,f2,d,v,dest){ const o=a.createOscillator(),g=a.createGain(); o.type=type; o.frequency.setValueAtTime(f1,t0); o.frequency.exponentialRampToValueAtTime(Math.max(20,f2),t0+d);
+    g.gain.setValueAtTime(.0001,t0); g.gain.exponentialRampToValueAtTime(v,t0+.015); g.gain.exponentialRampToValueAtTime(.0001,t0+d); o.connect(g); g.connect(dest||a.destination); o.start(t0); o.stop(t0+d+.05); return o; },
+  fart(){ this.snd((a,t0)=>{ const r=Math.random(), d=r<.35?.06+Math.random()*.1:r<.75?.2+Math.random()*.4:.7+Math.random()*1.3, f0=60+Math.random()*110;
+    const o=a.createOscillator(),g=a.createGain(),lf=a.createOscillator(),lg=a.createGain(),fl=a.createBiquadFilter();
+    o.type="sawtooth"; o.frequency.setValueAtTime(f0*(1.1+Math.random()*.6),t0); o.frequency.exponentialRampToValueAtTime(f0*(.4+Math.random()*.4),t0+d);
+    lf.type="square"; lf.frequency.setValueAtTime(14+Math.random()*30,t0); lf.frequency.linearRampToValueAtTime(8+Math.random()*40,t0+d); lg.gain.value=f0*.5; lf.connect(lg); lg.connect(o.frequency);
+    fl.type="lowpass"; fl.frequency.value=400+Math.random()*700; fl.Q.value=3+Math.random()*4;
+    g.gain.setValueAtTime(.0001,t0); g.gain.exponentialRampToValueAtTime(.38,t0+.02);
+    if(d>.6){ for(let k=1;k<5;k++) g.gain.linearRampToValueAtTime(.12+Math.random()*.28,t0+d*k/5); } else g.gain.setValueAtTime(.3,t0+d*.7);
+    g.gain.exponentialRampToValueAtTime(.0001,t0+d); o.connect(fl); fl.connect(g); g.connect(a.destination); o.start(t0); lf.start(t0); o.stop(t0+d+.05); lf.stop(t0+d+.05); }); },
+  // そのほかのへんな音
+  boing(){ this.snd((a,t0)=>{ const o=this.osc(a,t0,"sine",180,520,.45,.3); o.frequency.setValueAtTime(180,t0); for(let k=0;k<6;k++) o.frequency.linearRampToValueAtTime(k%2?220:520-k*40,t0+.07*(k+1)); }); },
+  honk(){ this.snd((a,t0)=>{ this.osc(a,t0,"square",330,310,.28,.12); this.osc(a,t0+.33,"square",330,300,.28,.12); }); },
+  slide(){ this.snd((a,t0)=>{ const up=Math.random()<.5; this.osc(a,t0,"triangle",up?250:1200,up?1400:180,.5+Math.random()*.4,.22); }); },
+  cuckoo(){ this.snd((a,t0)=>{ this.osc(a,t0,"sine",660,640,.22,.25); this.osc(a,t0+.28,"sine",520,510,.32,.25); }); },
+  pop(){ this.snd((a,t0)=>{ for(let k=0;k<2+rnd(4);k++) this.osc(a,t0+k*.09,"sine",900+Math.random()*900,200,.07,.25); }); },
+  tick(){ this.snd((a,t0)=>{ const n=3+rnd(6),iv=.25+Math.random()*.6; for(let k=0;k<n;k++) this.osc(a,t0+k*iv,"square",1800,1700,.03,.1); }); },
+  burp(){ this.snd((a,t0)=>{ const fl=a.createBiquadFilter(); fl.type="bandpass"; fl.frequency.value=300; fl.Q.value=2; fl.connect(a.destination); this.osc(a,t0,"sawtooth",110,70,.5+Math.random()*.4,.5,fl); }); },
+  weird(){ const L=["boing","honk","slide","cuckoo","pop","tick","burp"]; this[L[rnd(L.length)]](); },
+  fartLoop(){ clearTimeout(this.fx); const go=()=>{ const r=Math.random();
+      if(r<.5){ this.fart(); if(Math.random()<.3) setTimeout(()=>this.fart(),80+Math.random()*350); } else this.weird();
+      this.fx=setTimeout(go,350+Math.random()*2600); }; this.fx=setTimeout(go,300+Math.random()*1200); },
   noise(on){ clearInterval(this.nt); clearTimeout(this.fx); clearTimeout(this.vt); try{ window.speechSynthesis&&speechSynthesis.cancel(); }catch(e){} $("#onPad").classList.remove("shake"); const box=$("#onNoiseBox"); box.innerHTML=""; if(!on) return;
     const lv=this.st?this.st.nz:2; if(lv>=2) this.fartLoop();
     if(lv>=3){ $("#onPad").classList.add("shake"); const v=()=>{ this.voice(); this.vt=setTimeout(v,1200+Math.random()*2500); }; this.vt=setTimeout(v,800); }

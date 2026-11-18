@@ -37,7 +37,7 @@ async def main():
                 await pg.wait_for_timeout(50)
                 await pg.screenshot(path=os.path.join(ROOT, gid, f"icon-{size}.png"))
         # 45 Play 本体（ゲーム機の十字キー＋A・Bボタン）
-        art='<rect x="3" y="17" width="17" height="6.5" rx="1.6" fill="#fff"/><rect x="8.25" y="11.75" width="6.5" height="17" rx="1.6" fill="#fff"/><circle cx="29" cy="15" r="4.6" fill="#fff"/><circle cx="35" cy="22.5" r="4.6" fill="#14213D"/>'
+        art='<rect x="3" y="15" width="17" height="6.5" rx="1.6" fill="#fff"/><rect x="8.25" y="9.75" width="6.5" height="17" rx="1.6" fill="#fff"/><circle cx="29" cy="13" r="4.6" fill="#fff"/><circle cx="35" cy="20.5" r="4.6" fill="#14213D"/><path d="M14 33h14" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-opacity=".6"/>'
         s=svg(art,"#FF6A3D")
         for size in (512, 192, 180):
             await pg.set_viewport_size({"width": size, "height": size})
