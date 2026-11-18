@@ -36,8 +36,8 @@ async def main():
                 await pg.set_content(f'<html><body style="margin:0">{s.replace("width=\"512\" height=\"512\"", f"width=\"{size}\" height=\"{size}\"", 1)}</body></html>')
                 await pg.wait_for_timeout(50)
                 await pg.screenshot(path=os.path.join(ROOT, gid, f"icon-{size}.png"))
-        # 45 Play 本体（はずむボール＋動きの線）
-        art='<circle cx="27" cy="17" r="9" fill="#fff"/><path d="M22 13.5c2 1 6 1 10 0M21 19c3 1.5 9 1.5 12 0" stroke="#FF6A3D" stroke-width="2" stroke-linecap="round"/><path d="M6 15h8M4 22h10M8 29h7" stroke="#fff" stroke-width="3" stroke-linecap="round"/><ellipse cx="27" cy="36" rx="9" ry="2.6" fill="#fff" fill-opacity=".45"/>'
+        # 45 Play 本体（ゲーム機の十字キー＋A・Bボタン）
+        art='<rect x="3" y="17" width="17" height="6.5" rx="1.6" fill="#fff"/><rect x="8.25" y="11.75" width="6.5" height="17" rx="1.6" fill="#fff"/><circle cx="29" cy="15" r="4.6" fill="#fff"/><circle cx="35" cy="22.5" r="4.6" fill="#14213D"/>'
         s=svg(art,"#FF6A3D")
         for size in (512, 192, 180):
             await pg.set_viewport_size({"width": size, "height": size})
