@@ -427,7 +427,7 @@ body[data-mode="home"] #homeBtn{display:none}
 <script>const SOLO=null;</script>
 <script>
 /* ===== 設定 ===== */
-const APP_VER="2026.11.19-5";
+const APP_VER="2026.11.19-6";
 const SUPPORT_URL="https://ofuse.me/45tools";
 // 使い方のリンク（公開後に記事・動画のURLを入れる。空なら表示しない）
 const GUIDE={ note:"https://note.com/45tools/n/nd0ae097ad7a6",  // 日本語：note記事（ゲーム別の記事があれば notes を優先）
@@ -608,7 +608,10 @@ function fmtDelta(min){ const h=Math.floor(min/60), m=min%60;
 
 /* 音 */
 let AC=null;
-function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; } } if(AC.state==="suspended") AC.resume().catch(()=>{}); return AC; }
+function ac(){ if(AC&&AC.state==="closed") AC=null; if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; } } if(AC.state!=="running"){ try{ const p=AC.resume(); p&&p.catch&&p.catch(()=>{}); }catch(e){} } return AC; }
+// 音が出なくなったとき（iPhoneで時計が止まったままになる等）に作り直す
+function acReset(){ try{ AC&&AC.close(); }catch(e){} AC=null; return ac(); }
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&AC&&AC.state!=="running") ac(); });
 function tone(f,d,type="sine",v=.15,delay=0){ if(!store.get("b_snd",true)) return; const a=ac(); if(!a) return;
   try{ const o=a.createOscillator(),g=a.createGain(); o.type=type; o.frequency.value=f; const t0=a.currentTime+delay;
   g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(v,t0+.012); g.gain.exponentialRampToValueAtTime(.0001,t0+d);

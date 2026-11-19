@@ -43,6 +43,7 @@ BRAIN.def("taiko",`
 .tkrow select{flex:1;min-width:0;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:15px;padding:0 8px}
 .tkrow .tkmic{white-space:nowrap;padding:0 12px;height:42px;min-width:88px;justify-content:center}
 .tkrow .tkmic.rec{background:#E5484D;color:#fff;border-color:#E5484D}
+html.tklock,html.tklock body{overscroll-behavior:none;overflow:hidden;touch-action:none}
 .tkstage{position:fixed;inset:0;z-index:90;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;overflow:hidden;background:#141A2E}
 .tkstage canvas{display:block;width:100%;height:100%}
 .tkexit{position:absolute;left:max(12px,env(safe-area-inset-left,0px));top:calc(env(safe-area-inset-top,0px) + 12px);width:48px;height:48px;border-radius:50%;border:0;background:rgba(255,255,255,.88);color:#14213D;display:flex;align-items:center;justify-content:center;z-index:2;touch-action:none;padding:0}
@@ -80,6 +81,11 @@ const TK={
     stg.addEventListener("pointerdown",e=>{ if(e.target.closest("#tkExit")) return; e.preventDefault(); const r=stg.getBoundingClientRect(); this.tapAt(e.clientX-r.left,e.clientY-r.top); },{passive:false});
     stg.addEventListener("contextmenu",e=>e.preventDefault());
     stg.addEventListener("touchstart",e=>{ if(!e.target.closest("#tkExit")) e.preventDefault(); },{passive:false});
+    stg.addEventListener("touchmove",e=>e.preventDefault(),{passive:false});
+    // 遊んでいる間は ✕ 以外で画面が変わらないようにする（戻る・引っぱって再読み込み・拡大・ページを閉じる）
+    document.addEventListener("gesturestart",e=>{ if(this.st) e.preventDefault(); });
+    this.onPop=()=>{ if(this.st){ try{ history.pushState({tk:1},"",location.href); }catch(e){} } };
+    this.onUnload=e=>{ if(this.st){ e.preventDefault(); e.returnValue=""; } };
     const ex=$("#tkExit"); let ht=0;
     const cancel=()=>{ clearTimeout(ht); ex.classList.remove("hold"); };
     ex.addEventListener("pointerdown",e=>{ e.preventDefault(); if(!this.st) return;
@@ -88,7 +94,7 @@ const TK={
     ["pointerup","pointerleave","pointercancel"].forEach(k=>ex.addEventListener(k,cancel));
     addEventListener("resize",()=>{ if(this.st) this.layout(); });
     document.addEventListener("visibilitychange",()=>{ if(document.hidden&&this.st&&this.st.md==="beat") this.quit(); });
-    this.refresh(); this.loadMy();
+    this.session("playback"); this.refresh(); this.loadMy();
   },
   sname(id){ return id&&id.startsWith("my")?t("tkMyN",{n:id.slice(2)}):t("sn_"+id); },
   ono(id){ return id&&id.startsWith("my")?"♪":t("o_"+id); },
@@ -114,7 +120,9 @@ const TK={
   nz(a,t0,dest,ft,ff,q,d,v){ const s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain(); s.buffer=this.noiseBuf(a); f.type=ft; f.frequency.value=ff; f.Q.value=q;
     g.gain.setValueAtTime(.0001,t0); g.gain.exponentialRampToValueAtTime(Math.max(.0002,v),t0+.003); g.gain.exponentialRampToValueAtTime(.0001,t0+d); s.connect(f); f.connect(g); g.connect(dest); s.start(t0,Math.random()*.5); s.stop(t0+d+.05); },
   SY:{
-    don(a,t,d,v){ this.tn(a,t,d,"sine",150,50,.6,.95*v); this.tn(a,t,d,"triangle",95,45,.3,.4*v); this.nz(a,t,d,"lowpass",900,1,.08,.45*v); },
+    // スマホのスピーカーは低い音が出にくいので、少し高い音（200〜300Hz）と打つ音を重ねて大きく聞こえるようにする
+    don(a,t,d,v){ this.tn(a,t,d,"sine",190,62,.6,1*v); this.tn(a,t,d,"triangle",290,115,.32,.7*v); this.tn(a,t,d,"square",140,72,.12,.14*v);
+      this.nz(a,t,d,"bandpass",520,1.2,.08,.9*v); this.nz(a,t,d,"lowpass",2000,.7,.025,.5*v); },
     pon(a,t,d,v){ this.tn(a,t,d,"sine",430,230,.22,.75*v); this.nz(a,t,d,"bandpass",1800,2,.03,.25*v); },
     tan(a,t,d,v){ this.nz(a,t,d,"highpass",1500,.7,.18,.6*v); this.tn(a,t,d,"triangle",240,160,.1,.45*v); },
     kan(a,t,d,v){ this.tn(a,t,d,"square",1250,1150,.05,.22*v); this.nz(a,t,d,"bandpass",3000,6,.04,.45*v); this.tn(a,t,d,"sine",820,800,.09,.35*v); },
@@ -127,7 +135,20 @@ const TK={
     piyo(a,t,d,v){ this.tn(a,t,d,"sine",1800,2600,.09,.32*v); this.tn(a,t+.11,d,"sine",1900,2900,.09,.32*v); },
     bell(a,t,d,v){ this.tn(a,t,d,"sine",1568,1560,.9,.28*v); this.tn(a,t,d,"sine",3920,3900,.4,.09*v); this.tn(a,t,d,"sine",2350,2340,.6,.08*v); },
   },
-  hit(id,t0,dest,v){ if(!store.get("b_snd",true)) return; const a=ac(); if(!a) return; t0=t0||a.currentTime; dest=dest||a.destination; v=v==null?1:v;
+  // たたく音の通り道：音量を上げて、コンプレッサーで割れないようにまとめる（音の環境ごとに作り直す）
+  bus(a){ if(this.busA!==a){ const g=a.createGain(),cp=a.createDynamicsCompressor(),mk=a.createGain(); g.gain.value=1;
+      cp.threshold.value=-20; cp.knee.value=8; cp.ratio.value=5; cp.attack.value=.002; cp.release.value=.15; mk.gain.value=1.9;
+      g.connect(cp); cp.connect(mk); mk.connect(a.destination); this.busA=a; this.busIn=g; } return this.busIn; },
+  // 音が止まっていないか確かめる。iPhoneでは電話・通知・他のアプリの音で止まったり、時計が進まなくなることがある
+  alive(){ let a=ac(); if(!a) return null; const p=performance.now()/1000,ck=this.ck;
+    if(ck&&ck.a===a&&a.state==="running"&&p-ck.p>.5&&Math.abs(a.currentTime-ck.c)<.005&&!(this.st&&this.st.md==="beat")){ a=acReset(); if(!a) return null; this.restartBgm(); }
+    this.ck={a,p,c:a.currentTime}; return a; },
+  restartBgm(){ const st=this.st; if(st&&st.bgGo){ clearTimeout(st.bgT); st.mgs=[]; st.bgGo(ac().currentTime+.2); } },
+  lock(on){ const de=document.documentElement; de.classList.toggle("tklock",on);
+    if(on&&!this.locked){ this.locked=true; try{ history.pushState({tk:1},"",location.href); }catch(e){} addEventListener("popstate",this.onPop); addEventListener("beforeunload",this.onUnload); }
+    else if(!on&&this.locked){ this.locked=false; removeEventListener("popstate",this.onPop); removeEventListener("beforeunload",this.onUnload); try{ if(history.state&&history.state.tk) history.back(); }catch(e){} } },
+  session(type){ try{ if(navigator.audioSession) navigator.audioSession.type=type; }catch(e){} },
+  hit(id,t0,dest,v){ if(!store.get("b_snd",true)) return; const a=this.alive(); if(!a) return; t0=t0||a.currentTime; dest=dest||this.bus(a); v=v==null?1:v;
     try{ const b=id&&id.startsWith("my")?this.my[id]:null;
       if(b){ const s=a.createBufferSource(),g=a.createGain(); s.buffer=b; g.gain.value=v; s.connect(g); g.connect(dest); s.start(t0); return; }
       (this.SY[id]||this.SY.don).call(this,a,t0,dest,v); }catch(e){} },
@@ -135,13 +156,13 @@ const TK={
   /* ---------- 録音（2秒。前後の無音を切って、このスマホの中に保存） ---------- */
   async record(i){ if(this.recing) return; const a=ac(); if(!a) return;
     if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||typeof MediaRecorder==="undefined"){ toast(t("tkRecNo")); return; }
-    let stream; try{ stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false}}); }catch(e){ toast(t("tkMicNg")); return; }
-    let mr; try{ mr=new MediaRecorder(stream); }catch(e){ stream.getTracks().forEach(x=>x.stop()); toast(t("tkRecNo")); return; }
+    this.session("play-and-record"); let stream; try{ stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false}}); }catch(e){ this.session("playback"); toast(t("tkMicNg")); return; }
+    let mr; try{ mr=new MediaRecorder(stream); }catch(e){ stream.getTracks().forEach(x=>x.stop()); this.session("playback"); toast(t("tkRecNo")); return; }
     this.recing=true; const chunks=[]; mr.ondataavailable=e=>{ if(e.data&&e.data.size) chunks.push(e.data); };
     const done=new Promise(r=>mr.onstop=r); const btn=$(`[data-mic="${i}"]`); let left=2;
     const lab=()=>{ if(btn){ btn.classList.add("rec"); btn.textContent=t("tkRecing",{s:left}); } };
     mr.start(); lab(); const iv=setInterval(()=>{ left--; if(left>0) lab(); },1000);
-    await new Promise(r=>setTimeout(r,2000)); clearInterval(iv); try{ mr.stop(); }catch(e){} await done; stream.getTracks().forEach(x=>x.stop());
+    await new Promise(r=>setTimeout(r,2000)); clearInterval(iv); try{ mr.stop(); }catch(e){} await done; stream.getTracks().forEach(x=>x.stop()); this.session("playback");
     try{ const blob=new Blob(chunks,{type:mr.mimeType||(chunks[0]&&chunks[0].type)||""}); const ab=await blob.arrayBuffer();
       const buf=await new Promise((res,rej)=>{ const p=a.decodeAudioData(ab,res,rej); if(p&&p.then) p.then(res,rej); });
       const b=this.trim(a,buf);
@@ -208,12 +229,12 @@ const TK={
   now(){ const a=ac(); return a.currentTime-this.st.off; },
   start(){ const a=ac(); if(!a){ toast(t("tkRecNo")); return; } const s=this.s,n=+s.n;
     const st=this.st={md:s.md,n,snd:Array.from({length:n},(_,i)=>this.okSnd(s.snd[i])?s.snd[i]:"don"),parts:[],txt:[],hue:200,mgs:[],off:Math.min(.2,a.outputLatency||a.baseLatency||0)};
-    this.view("play"); $("#tkHint").textContent=st.md==="free"?t("tkHold"):""; $("#tkHint").style.color=st.md==="free"?"rgba(20,33,61,.55)":"rgba(255,255,255,.6)";
+    this.view("play"); this.lock(true); $("#tkHint").textContent=st.md==="free"?t("tkHold"):""; $("#tkHint").style.color=st.md==="free"?"rgba(20,33,61,.55)":"rgba(255,255,255,.6)";
     this.layout();
     if(st.md==="beat"){ const sg=this.SONGS[s.song],lv=+s.lv,e=60/sg.bpm/2,t0=a.currentTime+.8;
       Object.assign(st,{sg,song:s.song,lv,e,t0,first:t0+e*8,lead:[0,2.2,1.75,1.4][lv],win:[0,[.08,.17],[.065,.13],[.05,.11]][lv],great:0,good:0,miss:0,combo:0,max:0});
       st.notes=this.chart(sg,lv,n,st.first); st.end=st.notes[st.notes.length-1].t+1.4; this.music(sg,t0,true); }
-    else if(s.bgm!=="off"){ const sg=this.SONGS[s.bgm]; const go=t0=>{ if(this.st!==st) return; const end=this.music(sg,t0,false,.4); st.bgT=setTimeout(()=>go(end),Math.max(0,(end-a.currentTime-1.5)*1000)); }; go(a.currentTime+.3); }
+    else if(s.bgm!=="off"){ const sg=this.SONGS[s.bgm]; const go=st.bgGo=t0=>{ if(this.st!==st) return; const end=this.music(sg,t0,false,.4); st.bgT=setTimeout(()=>go(end),Math.max(0,(end-ac().currentTime-1.5)*1000)); }; go(a.currentTime+.3); }
     cancelAnimationFrame(this.raf); this.lt=0; this.loop(); },
   layout(){ const st=this.st,cv=$("#tkCv"),r=$("#tkStage").getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1);
     const W=this.W=r.width,H=this.H=r.height; cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); this.cx=cv.getContext("2d"); this.cx.setTransform(dpr,0,0,dpr,0,0);
@@ -281,7 +302,7 @@ const TK={
       stats:[[t("tkGreat"),String(st.great)],[t("tkGood"),String(st.good)],[t("tkMiss"),String(st.miss)],[t("tkMaxC"),String(st.max)]],
       extra:`<p class="lead" style="margin:6px 0 0;text-align:center">${esc(t(acc>=95?"tkG1":acc>=80?"tkG2":acc>=50?"tkG3":"tkG4"))}</p>`,retry:()=>this.start()});
     if(!best||acc===0) sfx.win(); },
-  stop(){ cancelAnimationFrame(this.raf); this.stopMusic(); this.st=null; $("#tkExit").classList.remove("hold"); },
+  stop(){ cancelAnimationFrame(this.raf); this.stopMusic(); this.st=null; this.lock(false); $("#tkExit").classList.remove("hold"); },
   quit(){ this.stop(); this.view("setup"); this.refresh(); }
 };
 return TK;
