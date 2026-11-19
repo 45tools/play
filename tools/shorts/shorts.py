@@ -5,13 +5,15 @@ python3 shorts.py all      … 9本
 import asyncio, sys, os, json
 from studio import Studio, APP
 
-COL = {"ira": "#FF6A3D", "rv": "#1F9D6B", "kesi": "#0FAFB4"}
+COL = {"ira": "#FF6A3D", "rv": "#1F9D6B", "kesi": "#0FAFB4", "one": "#8A5CF6"}
 NAME = {"ira": {"ja": "イライラ棒", "en": "Steady", "zh-Hant": "穿越迷道"},
         "rv": {"ja": "リバーシ", "en": "Reversi", "zh-Hant": "黑白棋"},
-        "kesi": {"ja": "消しゴムおとし", "en": "Eraser Flick", "zh-Hant": "橡皮擦大戰"}}
+        "kesi": {"ja": "消しゴムおとし", "en": "Eraser Flick", "zh-Hant": "橡皮擦大戰"},
+        "one": {"ja": "1分体感", "en": "One Minute", "zh-Hant": "1分鐘體感"}}
 TAG = {"ira": {"ja": "かべに ふれずに ゴールへ", "en": "Don't touch the walls", "zh-Hant": "不碰牆，抵達終點"},
        "rv": {"ja": "はさんで、ひっくり返そう", "en": "Trap and flip", "zh-Hant": "夾住，翻過來"},
-       "kesi": {"ja": "相手を 机から 落とそう", "en": "Knock it off the desk", "zh-Hant": "把對方撞下桌子"}}
+       "kesi": {"ja": "相手を 机から 落とそう", "en": "Knock it off the desk", "zh-Hant": "把對方撞下桌子"},
+       "one": {"ja": "時計を見ずに ぴったりストップ", "en": "No clock. Stop right on time", "zh-Hant": "不看時鐘，剛好停下"}}
 END = {"ja": ("無料・広告なし・インストール不要", ["体を動かして", "1人でも、2人でも"], "毎週土曜、新しい遊びが増えます"),
        "en": ("Free · No ads · No install", ["Move a little", "Solo or with a friend"], "A new game every Saturday"),
        "zh-Hant": ("免費・無廣告・免安裝", ["動一動身體", "一個人或兩個人"], "每週六新增遊戲")}
@@ -47,6 +49,19 @@ L = {  # 読み上げ（字幕も同じ文）。最後は締めのことば
          "用手指滑動自己的橡皮擦，滑得越長，飛得越用力。", "桌上還有不會動的障礙物。先把對方撞下去的人贏！",
          "45 Play，免費、無廣告，用瀏覽器馬上就能玩。"]},
 }
+L["one"] = {
+  "ja": ["45 Play、1分体感。時計を見ないで、ぴったりの時間でストップ！", "目標は10秒から3分。途中のタップありなら、10秒のときは3秒・6秒でもタップします。",
+         "計っている間は、画面が真っ黒。心の中で数えよう。", "最後に、それぞれの時間と差を発表。0.1秒以内ならニアピン賞！",
+         "みんなでやるなら、いっしょにスタート。じゃまありでは、数字やへんな音が数えるのをじゃまします。", "1周ごとに順位を発表。目標をこえたらアウトのドボンルールもあります。",
+         "45 Play。無料・広告なしで、ブラウザですぐ遊べます。"],
+  "en": ["45 Play: One Minute. No clock — stop right on time!", "Targets from 10 seconds to 3 minutes. With checkpoints on, a 10-second round means tapping at 3 and 6 seconds too.",
+         "While you time it, the screen goes black. Count in your head.", "Then every time and gap is shown. Within 0.1 seconds? Bullseye!",
+         "Playing with friends? Start together. With distractions on, numbers and silly sounds mess with your count.", "Rankings after every round, plus a Bust rule: go past the target and you're out.",
+         "45 Play. Free, no ads, right in your browser."],
+  "zh-Hant": ["45 Play，1分鐘體感。不看時鐘，剛好在時間到時停下！", "目標從10秒到3分鐘。開啟中途點擊的話，10秒就要在3秒、6秒時也點一下。",
+         "計時的時候畫面全黑，在心裡數吧。", "最後公布每一次的時間和差距。0.1秒以內就是神準獎！",
+         "大家一起玩就同時開始。有干擾時，數字和怪聲音會打亂你數數。", "每一輪公布排名，還有超過目標就出局的爆掉規則。",
+         "45 Play，免費、無廣告，用瀏覽器馬上就能玩。"]}
 TILES = {}
 
 
@@ -201,13 +216,46 @@ async def kesi(s, lang):
     await ending(s, "kesi", lang)
 
 
+async def one(s, lang):
+    T = L["one"][lang]
+    await opening(s, "one", lang)
+    await s.js("(()=>{const m=__b.MODS.one; Object.assign(m.s,{tg:'60',st:'plain',pl:'1',lp:'off',ru:'near',tn:'turn',nz:'1'}); store.set('p_one_rec',{}); m.refresh();})()")
+    await s.scene("setup")
+    await s.say(T[1]); await s.hold(0.5)
+    await s.tap('#onTgSel [data-val="10"]', after=0.5)
+    await s.tap('#onLpSel [data-val="on"]', after=0.6)
+    await s.wait_speech(0.2)
+    await s.tap('#dock [data-act="start"]', after=0.5)
+    await s.scene("run")
+    await s.tap('#onPad', after=0)
+    await s.say(T[2], wait_prev=False)
+    for gap in (2.78, 2.62, 3.95):
+        await s.hold(gap); await s.tap('#onPad', after=0)
+    await s.hold(0.6)
+    await s.wait_speech()
+    await s.scene("result")
+    await s.say(T[3]); await s.hold(1.0)
+    await s.wait_speech(0.6)
+    await s.scene("multi")
+    await s.js("(()=>{const m=__b.MODS.one; m.quit(); Object.assign(m.s,{pl:'3',tn:'tog',st:'noise',nz:'1',ru:'doban'}); m.refresh(); m.start();})()")
+    await s.say(T[4]); await s.hold(0.6)
+    await s.tap('#onPad', after=0)
+    for i, gap in ((1, 8.6), (0, 0.7), (2, 0.9)):
+        await s.hold(gap); await s.tap('#onMulti button', nth=i, after=0)
+    await s.hold(0.4)
+    await s.wait_speech()
+    await s.say(T[5]); await s.hold(1.0)
+    await s.wait_speech(0.4)
+    await ending(s, "one", lang)
+
+
 async def run(game, lang, bgm=None):
     async with Studio(f"{game}_{lang}", lang, COL[game]) as s:
         if not TILES:
             await s.stage(f"__app({json.dumps(APP + '?preview=1')})"); await s.page.clock.run_for(1500); await s.page.wait_for_timeout(1200)
             for g in COL: TILES[g] = await s.page.frame(name="app").evaluate(f"TILE['{g}']")
             await s.stage("__app('about:blank')")
-        await {"ira": ira, "rv": rv, "kesi": kesi}[game](s, lang)
+        await {"ira": ira, "rv": rv, "kesi": kesi, "one": one}[game](s, lang)
     return s.finish(bgm)
 
 
