@@ -20,6 +20,7 @@ GAMES = [  # id, 英語名（ホーム画面の名前）, 日本語名, 説明
     ("one", "One Minute", "1分体感", "時計を見ないで、ぴったり1分を当てる。じゃまありや、みんなで順位を競う遊び方も。"),
     ("taiko", "Drums", "たいこ", "画面をたたいて音を出す。赤ちゃん向けの自由あそびと、音楽に合わせるリズムゲーム。音は自分で録音もできる。"),
     ("sky", "Sky Shooter", "スカイシューター", "縦スクロールのシューティング。空の敵は弾、地上の的は爆弾でねらう。全4面＋要塞。"),
+    ("kart", "Mini Kart GP", "ミニカートGP", "後ろから見る疑似3Dのカートレース。ドリフトで加速、アイテム箱、8台で3周。"),
 ]
 BRAND_DESC = "体を動かしたり、ひと息ついたりする無料の遊び。インストール不要・広告なし。"
 
@@ -54,7 +55,7 @@ for gid, en, ja, desc in GAMES:
     open(S(gid, "manifest.json"), "w", encoding="utf-8").write(manifest(f"45 {en}（{ja}）", f"45 {en}", "../"))
     shutil.copy(S("src", "games", gid + ".js"), S("games", gid + ".js"))
     files += [f"{gid}/", f"{gid}/index.html", f"games/{gid}.js", f"{gid}/icon-180.png"]
-files += ["lib/matter.min.js", "snd/sky.mp3"]
+files += ["lib/matter.min.js", "snd/sky.mp3", "snd/kart.mp3"]
 
 sw = f'''const C="play-{ver}";
 const FILES={json.dumps(files)};
