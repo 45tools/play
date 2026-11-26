@@ -116,8 +116,8 @@ const SND={ bus:null,busA:null,last:{},
 };
 
 /* ---------- 絵（キャンバスに直接かく。すべてオリジナルの形） ---------- */
-function drawShip(c,x,y,T,blink){ if(blink&&Math.floor(T/80)%2) return;
-  c.save(); c.translate(x,y);
+function drawShip(c,x,y,T,blink,bank){ if(blink&&Math.floor(T/80)%2) return;
+  c.save(); c.translate(x,y); if(bank) c.scale(1-Math.abs(bank)*.24,1);
   // 炎
   const fl=6+Math.sin(T/30)*2.5; c.fillStyle="#FFB23F"; c.beginPath(); c.moveTo(-4,11); c.lineTo(0,11+fl); c.lineTo(4,11); c.fill();
   c.fillStyle="#2E6BFF"; c.beginPath(); c.moveTo(0,-4); c.lineTo(17,9); c.lineTo(15,13); c.lineTo(0,8); c.lineTo(-15,13); c.lineTo(-17,9); c.closePath(); c.fill();
@@ -126,6 +126,13 @@ function drawShip(c,x,y,T,blink){ if(blink&&Math.floor(T/80)%2) return;
   c.fillStyle="#2E6BFF"; c.fillRect(-7,6,3,7); c.fillRect(4,6,3,7);
   c.restore(); }
 function shadow(c,x,y,rx,ry){ c.fillStyle="rgba(0,0,0,.22)"; c.beginPath(); c.ellipse(x+10,y+18,rx,ry,0,0,7); c.fill(); }
+
+function makeClouds(stage){ const r=rng(4200+stage*17), n=stage===3?3:6, out=[];
+  for(let i=0;i<n;i++){ const w=70+r()*90, parts=[]; for(let k=0;k<5;k++) parts.push([(r()-.5)*w,(r()-.5)*w*.35,w*(.22+r()*.18)]); out.push({x:r()*LW,y0:r(),parts,a:.1+r()*.08}); }
+  return out; }
+// その場だけの短い文（このゲームの中だけで使う）
+const TX={ja:{core:"ここ！"},en:{core:"HERE!"},"zh-Hant":{core:"這裡！"},zh:{core:"这里！"}};
+const tx=k=>(TX[lang]||TX.ja)[k]||TX.ja[k];
 
 /* ---------- 面の中身（地上の的・空の敵の出し方） ---------- */
 function placeGround(map,stage,lvRate){ const r=rng(map.seed+7), out=[]; let my=380;
@@ -201,11 +208,13 @@ const SKY={
       // 描画が遅い端末でも同じ速さで進むよう、1/60秒ずつ細かく進める
       if(mode==="sky"&&!this.st.paused){ while(rem>0&&this.st&&!this.st.paused){ const d=Math.min(1/60,rem); this.update(d,T); rem-=d; } } if(this.st) this.render(T); this.raf=requestAnimationFrame(f); };
     this.raf=requestAnimationFrame(f); },
+  safeTop(){ try{ const d=document.createElement("div"); d.style.cssText="position:fixed;top:0;left:0;width:1px;height:env(safe-area-inset-top,0px);visibility:hidden;pointer-events:none"; document.body.appendChild(d); const h=d.getBoundingClientRect().height; d.remove(); return h||0; }catch(e){ return 0; } },
   layout(){ const r=$("#skStage").getBoundingClientRect(), W=r.width||360, H=r.height||640, dpr=Math.min(2,window.devicePixelRatio||1);
     this.LH=clamp(Math.round(LW*H/W),560,780); this.z=Math.min(W/LW,H/this.LH); this.ox=(W-LW*this.z)/2; this.oy=(H-this.LH*this.z)/2;
+    this.hudY=Math.max(0,(this.safeTop()-this.oy)/this.z); // 上の表示を、ノッチ・時計の下にずらす
     const cv=$("#skCv"); cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); this.dpr=dpr; this.cx=cv.getContext("2d"); this.chunks={}; },
   load(n){ const st=this.st, LH=this.LH; st.stage=n; st.map=makeMap(n); st.s=0; st.t=0; st.gr=placeGround(st.map,n,st.L.rate); st.air=st.air||0;
-    st.en=[]; st.eb=[]; st.pb=[]; st.bombs=[]; st.items=[]; st.fx=[]; st.scorch=[]; st.r=rng(777+n*31+st.loop*5);
+    st.en=[]; st.eb=[]; st.pb=[]; st.bombs=[]; st.items=[]; st.fx=[]; st.scorch=[]; st.pops=[]; st.clouds=makeClouds(n); st.bank=0; st.muz=0; st.whiteT=0; st.r=rng(777+n*31+st.loop*5);
     st.ship={x:LW/2,y:LH-110,inv:2.2,dead:0}; st.fireT=0; st.waveT=2.5; st.phase="play"; st.fort=null; st.banner={txt:t("skStageT",{n:n+1,name:t("skSt"+(n+1))}),t:2.4};
     this.chunks={}; },
   pause(on){ const st=this.st; if(!st) return; st.paused=on; $("#skPause").hidden=!on; if(on) this.bgmOff(); else { this.drag=null; this.bgmOn(); } },
@@ -214,6 +223,7 @@ const SKY={
   sy(st,my){ return this.LH-(my-st.s); },          // 地面の位置 → 画面の y
   add(p){ const st=this.st, before=st.score; st.score+=p; if(st.score>=st.next1up){ st.next1up+=st.next1up<40000?30000:40000; st.lives++; SND.play("oneup"); this.flash(t("skExtend")); } },
   flash(txt){ this.st.msg={txt,t:1.4}; },
+  pop(x,y,p){ const st=this.st; st.pops.push({x,y,txt:String(p),t:0}); if(st.pops.length>14) st.pops.shift(); },
   boom(x,y,big,col){ const st=this.st; st.fx.push({k:"ring",x,y,t:0,d:big?.7:.38,r:big?46:18,col:col||"#FFD34D"});
     for(let i=0;i<(big?22:9);i++){ const a=Math.random()*7,v=(big?120:70)*(.4+Math.random()); st.fx.push({k:"spark",x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,t:0,d:.35+Math.random()*.35,col:i%3?"#FFB23F":"#FFF3C4"}); } },
   // 空の敵を出す（面と時間で種類を変える）
@@ -237,12 +247,13 @@ const SKY={
     else { let mx=st.mv.x,my=st.mv.y; st.mv={x:0,y:0}; const k=this.keys, ks=230*dt;
       if(k.ArrowLeft||k.a) mx-=ks; if(k.ArrowRight||k.d) mx+=ks; if(k.ArrowUp||k.w) my-=ks; if(k.ArrowDown||k.s) my+=ks;
       sh.x=clamp(sh.x+mx,14,LW-14); sh.y=clamp(sh.y+my,150,LH-26); sh.inv=Math.max(0,sh.inv-dt);
+      st.bank+=(clamp(mx/(260*dt),-1,1)-st.bank)*Math.min(1,dt*10); st.muz=Math.max(0,st.muz-dt);
       // 弾は自動で撃つ（パワーで本数がふえる）
       st.fireT-=dt; if(st.fireT<=0){ st.fireT=.13; const P=st.pow; const v=-520;
         if(P===1) st.pb.push({x:sh.x,y:sh.y-16,vx:0,vy:v});
         else if(P===2){ st.pb.push({x:sh.x-6,y:sh.y-14,vx:0,vy:v}); st.pb.push({x:sh.x+6,y:sh.y-14,vx:0,vy:v}); }
         else { st.pb.push({x:sh.x,y:sh.y-16,vx:0,vy:v}); st.pb.push({x:sh.x-7,y:sh.y-12,vx:-70,vy:v}); st.pb.push({x:sh.x+7,y:sh.y-12,vx:70,vy:v}); }
-        SND.play("shot",.32,.12); }
+        st.muz=.05; SND.play("shot",.24,.15); }
       // 爆弾：照準（機体の少し前）の地面に落ちる。落ちている途中は次を落とせない
       const sightY=sh.y-118, target=this.groundUnder(sh.x,sightY);
       st.sightRed=!!target;
@@ -254,22 +265,29 @@ const SKY={
     st.bombs=st.bombs.filter(b=>{ b.t+=dt; if(b.t<.5) return true; this.groundHit(b.x,b.my); return false; });
     // 自機の弾
     st.pb=st.pb.filter(b=>{ b.x+=b.vx*dt; b.y+=b.vy*dt; if(b.y<-10||b.x<-10||b.x>LW+10) return false;
-      for(const e of st.en){ if(e.hp>0&&dist2(b.x,b.y,e.x,e.y)<(e.k==="heavy"?22*22:14*14)){ e.hp--; if(e.hp<=0){ this.add(e.pt); st.air++; this.boom(e.x,e.y,e.k==="heavy"); SND.play("enemy_down",.7); if(e.k==="heavy") st.items.push({x:e.x,y:e.y,k:st.r()<.5?"P":"S"}); } else SND.play("enemy_hit",.6,.05); return false; } }
+      for(const e of st.en){ if(e.hp>0&&dist2(b.x,b.y,e.x,e.y)<(e.k==="heavy"?22*22:14*14)){ e.hp--; e.hit=.07; if(e.hp<=0){ this.add(e.pt); this.pop(e.x,e.y,e.pt); st.air++; this.boom(e.x,e.y,e.k==="heavy"); SND.play("enemy_down",.7); if(e.k==="heavy"){ st.items.push({x:e.x,y:e.y,k:st.r()<.5?"P":"S"}); st.shake=Math.max(st.shake||0,4); } } else SND.play("enemy_hit",.6,.05); return false; } }
       return true; });
     // 空の敵
     if(st.phase==="play"||st.phase==="boss"){ st.waveT-=dt; if(st.waveT<=0&&st.t>2) this.wave(); }
-    st.en.forEach(e=>{ e.t+=dt;
+    st.en.forEach(e=>{ e.t+=dt; if(e.hit>0) e.hit-=dt;
       if(e.k==="drift"){ e.y+=e.vy*dt; e.x=e.x0+Math.sin(e.t*2.2+e.ph)*e.amp; if(e.shoot&&!e.fired&&e.y>LH*.25){ e.fired=true; this.shootAt(e.x,e.y,150*D.bs); } }
       else if(e.k==="swoop"){ if(e.y<e.turn&&e.vy>0){ e.y+=e.vy*dt; } else { if(!e.fired){ e.fired=true; if(st.r()<.6*D.fire) this.shootAt(e.x,e.y,160*D.bs); e.vx=(sh.x>e.x?1:-1)*90; } e.vy=Math.max(-190,e.vy-420*dt); e.y+=e.vy*dt; e.x+=e.vx*dt; } }
       else if(e.k==="spin"){ e.x+=e.vx*dt; e.y+=e.vy*dt; }
       else if(e.k==="heavy"){ e.y+=e.vy*dt; if(e.y>LH*.35) e.vy=Math.max(8,e.vy-10*dt); e.fireT-=dt*D.fire; if(e.fireT<=0&&e.y>20){ e.fireT=1.7; this.shootAt(e.x,e.y+16,130*D.bs,[-.28,0,.28]); } }
       if(sh.dead<=0&&sh.inv<=0&&e.hp>0&&dist2(e.x,e.y,sh.x,sh.y)<(e.k==="heavy"?26*26:15*15)){ if(e.k!=="heavy"){ e.hp=0; this.boom(e.x,e.y); } this.hurt(); } });
-    st.en=st.en.filter(e=>e.hp>0&&e.y<LH+40&&e.y>-260&&e.x>-90&&e.x<LW+90);
+    st.en=st.en.filter(e=>{ if(e.hp<=0||e.y>LH+40||e.y<-260) return false;
+      if(e.k==="spin") return e.vx>0?e.x<LW+40:e.x>-40;   // 横から来る編隊：反対側へ抜けたら消す
+      if(e.vy<0&&e.y<-30) return false;                     // 上へ去った
+      return e.x>-90&&e.x<LW+90; });
     // 地上の的
     st.gr.forEach(o=>{ if(o.hp<=0) return; const y=this.sy(st,o.my); if(y<-80||y>LH+60) return;
       if((o.k==="tank"||o.k==="boat")&&y>-20){ const nx=o.x+o.vx*dt, tt=tileAt(st.map,nx,o.my); const ok=o.k==="boat"?(tt===T_SEA||tt===T_DEEP):DRIVE(tt); if(ok&&nx>14&&nx<LW-14) o.x=nx; else o.vx=-o.vx; }
       if(o.k==="turret"||o.k==="tank"||o.k==="boat"){ o.ft=(o.ft==null?.8+st.r()*1.6:o.ft)-dt*D.fire;
         if(o.ft<=0){ o.ft=(o.onFort?1.6:2.6)+st.r()*1.2; if(y>40&&y<LH*.62&&sh.dead<=0&&Math.abs(y-sh.y)>70) this.shootAt(o.x,y,(o.onFort?140:115)*D.bs,o.onFort&&st.r()<.4?[-.2,.2]:[0]); } } });
+    // 要塞のコア：ときどき全方向へ弾を撃つ
+    if(st.phase==="boss"&&fort&&fort.hp>0){ const fy=this.sy(st,fort.my); fort.bt=(fort.bt==null?2.2:fort.bt)-dt*D.fire;
+      if(fort.bt<=0){ const n={1:6,2:8,3:10}[st.lv]||8, a0=st.r()*Math.PI; fort.bt=(fort.hp===1?2.6:3.4)+st.r();
+        if(sh.dead<=0&&st.eb.length<st.L.cap+10){ for(let k=0;k<n;k++){ const a=a0+k*2*Math.PI/n; st.eb.push({x:fort.x+Math.cos(a)*16,y:fy+Math.sin(a)*16,vx:Math.cos(a)*95*D.bs,vy:Math.sin(a)*95*D.bs}); } SND.play("enemy_hit",.5); } } }
     // 敵の弾
     st.eb=st.eb.filter(b=>{ b.x+=b.vx*dt; b.y+=b.vy*dt; if(b.y<-10||b.y>LH+10||b.x<-10||b.x>LW+10) return false;
       if(sh.dead<=0&&sh.inv<=0&&dist2(b.x,b.y,sh.x,sh.y)<6.5*6.5){ this.hurt(); return false; } return true; });
@@ -278,6 +296,7 @@ const SKY={
       if(sh.dead<=0&&dist2(it.x,it.y,sh.x,sh.y)<22*22){ if(it.k==="P"){ if(st.pow<3) st.pow++; else this.add(1000); SND.play("powerup",.8); this.flash(t("skPower")); } else { st.shield=true; SND.play("shield"); this.flash(t("skShield")); } return false; } return true; });
     // 演出
     st.fx=st.fx.filter(f=>{ f.t+=dt; if(f.k==="spark"){ f.x+=f.vx*dt; f.y+=f.vy*dt; } return f.t<f.d; });
+    st.pops=st.pops.filter(q=>{ q.t+=dt; q.y-=26*dt; return q.t<.9; }); if(st.whiteT>0) st.whiteT-=dt;
     if(st.shake) st.shake=Math.max(0,st.shake-dt*30);
     // 要塞をこわしたら、少し待って次の面へ
     if(st.phase==="clear"){ st.clearT-=dt; if(st.clearT<=0) this.nextStage(); }
@@ -290,10 +309,10 @@ const SKY={
     st.gr.forEach(o=>{ if(o.hp<=0) return; const oy=this.sy(st,o.my), r=o.k==="fort"?22:20; if(dist2(o.x,oy,x,y)>r*r) return;
       o.hp--; any=true;
       if(o.k==="fort"){ if(o.hp>0){ this.boom(o.x,oy,false,"#FF6B6B"); SND.play("enemy_hit",.9); st.shake=4; return; }
-        this.add(5000); this.boom(o.x,oy,true); this.boom(o.x-40,oy+20,true); this.boom(o.x+40,oy-20,true); st.shake=10; SND.play("explosion");
+        this.add(5000); this.pop(o.x,oy-30,5000); st.whiteT=.35; this.boom(o.x,oy,true); this.boom(o.x-40,oy+20,true); this.boom(o.x+40,oy-20,true); st.shake=10; SND.play("explosion");
         st.gr.forEach(q=>{ if(q.onFort&&q.hp>0){ q.hp=0; this.boom(q.x,this.sy(st,q.my)); } });
         st.phase="clear"; st.clearT=3.2; st.banner={txt:t("skClear",{n:st.stage+1}),t:3}; st.gnd++; return; }
-      if(o.hp<=0){ st.gnd++; this.add({turret:300,tank:400,boat:350,dome:200,crate:100}[o.k]||100); st.scorch.push({x:o.x,my:o.my});
+      if(o.hp<=0){ const pt={turret:300,tank:400,boat:350,dome:200,crate:100}[o.k]||100; st.gnd++; this.add(pt); this.pop(o.x,oy-14,pt); st.scorch.push({x:o.x,my:o.my});
         if(o.k==="crate") st.items.push({x:o.x,y:oy,k:o.give}); } });
     if(!any) st.scorch.push({x,my,small:1});
     this.boom(x,y,false,"#FF9A3D"); SND.play("ground_boom",.8); st.shake=Math.max(st.shake||0,any?5:2);
@@ -351,13 +370,23 @@ const SKY={
     st.items.forEach(it=>{ const p=1+Math.sin(T/120)*.08; c.save(); c.translate(it.x,it.y); c.scale(p,p);
       c.fillStyle=it.k==="P"?"#FF7A3D":"#3DC8FF"; c.beginPath(); c.arc(0,0,11,0,7); c.fill(); c.strokeStyle="#fff"; c.lineWidth=2; c.stroke();
       c.fillStyle="#fff"; c.font="700 13px Fredoka, sans-serif"; c.textAlign="center"; c.textBaseline="middle"; c.fillText(it.k,0,1); c.restore(); });
+    // 要塞のコアの目印（どこに爆弾を落とせばいいか）
+    if(st.phase==="boss"){ const fo=st.gr.find(o=>o.k==="fort"); if(fo&&fo.hp>0){ const fy=this.sy(st,fo.my), k=Math.sin(T/160)>0;
+      c.strokeStyle=k?"#FF3B3B":"#FFE07A"; c.lineWidth=3; const R=30+Math.sin(T/120)*3;
+      for(let q=0;q<4;q++){ const a=q*Math.PI/2+Math.PI/4; c.beginPath(); c.arc(fo.x,fy,R,a-.35,a+.35); c.stroke(); }
+      c.fillStyle="#fff"; c.font="800 12px 'M PLUS Rounded 1c', Fredoka, sans-serif"; c.textAlign="center"; c.textBaseline="middle"; c.lineWidth=3; c.strokeStyle="rgba(8,14,32,.8)"; c.strokeText(tx("core"),fo.x,fy-R-10); c.fillText(tx("core"),fo.x,fy-R-10); } }
+    // 雲（地面より速く流れる。うすく）
+    st.clouds.forEach(q=>{ const span=LH+260, y=((q.y0*span+st.s*1.8)%span)-130; c.globalAlpha=q.a; c.fillStyle="#fff";
+      q.parts.forEach(([dx,dy,r])=>{ c.beginPath(); c.ellipse(q.x+dx,y+dy,r,r*.62,0,0,7); c.fill(); }); c.globalAlpha=1; });
     // 空のものの影 → 本体
     st.en.forEach(e=>shadow(c,e.x,e.y,e.k==="heavy"?18:9,e.k==="heavy"?8:4));
     if(sh.dead<=0) shadow(c,sh.x,sh.y,12,5);
     st.en.forEach(e=>this.drawAir(c,e,T));
-    c.fillStyle="#FFF6B0"; st.pb.forEach(b=>{ c.fillRect(b.x-1.5,b.y-7,3,12); });
+    c.fillStyle="rgba(255,236,140,.35)"; st.pb.forEach(b=>{ c.fillRect(b.x-3,b.y-9,6,16); });
+    c.fillStyle="#FFFBE0"; st.pb.forEach(b=>{ c.fillRect(b.x-1.2,b.y-7,2.4,12); });
     st.eb.forEach(b=>{ c.fillStyle="#FF4D6D"; c.beginPath(); c.arc(b.x,b.y,4,0,7); c.fill(); c.fillStyle="#FFE3EA"; c.beginPath(); c.arc(b.x,b.y,1.8,0,7); c.fill(); });
-    if(sh.dead<=0){ drawShip(c,sh.x,sh.y,T,sh.inv>0);
+    if(sh.dead<=0){ drawShip(c,sh.x,sh.y,T,sh.inv>0,st.bank);
+      if(st.muz>0){ c.fillStyle="rgba(255,240,170,.85)"; c.beginPath(); c.arc(sh.x,sh.y-19,4+st.muz*40,0,7); c.fill(); }
       if(st.shield){ c.strokeStyle=`rgba(120,220,255,${.55+Math.sin(T/90)*.25})`; c.lineWidth=2.5; c.beginPath(); c.arc(sh.x,sh.y,22,0,7); c.stroke(); }
       // 照準
       const sy=sh.y-118, red=st.sightRed; c.strokeStyle=red?"#FF3B3B":"rgba(255,255,255,.85)"; c.lineWidth=2;
@@ -365,13 +394,16 @@ const SKY={
     // 爆発
     st.fx.forEach(f=>{ const u=f.t/f.d; if(f.k==="ring"){ c.globalAlpha=1-u; c.fillStyle=f.col; c.beginPath(); c.arc(f.x,f.y,f.r*(.3+u*.7),0,7); c.fill(); c.globalAlpha=(1-u)*.8; c.fillStyle="#fff"; c.beginPath(); c.arc(f.x,f.y,f.r*.35*(1-u),0,7); c.fill(); c.globalAlpha=1; }
       else { c.globalAlpha=1-u; c.fillStyle=f.col; c.fillRect(f.x-1.5,f.y-1.5,3,3); c.globalAlpha=1; } });
+    c.textAlign="center"; c.textBaseline="middle"; c.font="700 11px Fredoka, sans-serif"; c.lineWidth=3; c.strokeStyle="rgba(8,14,32,.7)";
+    st.pops.forEach(q=>{ c.globalAlpha=Math.min(1,(.9-q.t)*3); c.strokeText(q.txt,q.x,q.y); c.fillStyle=+q.txt>=1000?"#FFD34D":"#fff"; c.fillText(q.txt,q.x,q.y); c.globalAlpha=1; });
+    if(st.whiteT>0){ c.globalAlpha=Math.min(.8,st.whiteT*2.4); c.fillStyle="#fff"; c.fillRect(0,0,LW,LH); c.globalAlpha=1; }
     c.restore();
     // 上の表示（スコア・残り・パワー）
-    c.fillStyle="rgba(8,14,32,.42)"; c.fillRect(0,0,LW,44);
-    c.fillStyle="#fff"; c.textBaseline="middle"; c.font="700 17px Fredoka, sans-serif"; c.textAlign="right"; c.fillText(st.score.toLocaleString(),LW-12,16);
-    c.font="600 11px Fredoka, sans-serif"; c.fillStyle="rgba(255,255,255,.7)"; c.fillText(t("skStageN",{n:st.stage+1})+(st.loop?` ×${st.loop+1}`:""),LW-12,34);
-    c.textAlign="left"; for(let i=0;i<Math.min(st.lives,6);i++){ c.save(); c.translate(64+i*17,22); c.scale(.42,.42); drawShip(c,0,0,0,false); c.restore(); }
-    c.fillStyle="#FFB23F"; c.font="700 11px Fredoka, sans-serif"; c.fillText("P"+st.pow+(st.shield?" S":""),64+Math.min(st.lives,6)*17+4,22);
+    const hy=this.hudY||0; c.fillStyle="rgba(8,14,32,.42)"; c.fillRect(0,0,LW,44+hy);
+    c.fillStyle="#fff"; c.textBaseline="middle"; c.font="700 17px Fredoka, sans-serif"; c.textAlign="right"; c.fillText(st.score.toLocaleString(),LW-12,hy+16);
+    c.font="600 11px Fredoka, sans-serif"; c.fillStyle="rgba(255,255,255,.7)"; c.fillText(t("skStageN",{n:st.stage+1})+(st.loop?` ×${st.loop+1}`:""),LW-12,hy+34);
+    c.textAlign="left"; for(let i=0;i<Math.min(st.lives,6);i++){ c.save(); c.translate(64+i*17,hy+22); c.scale(.42,.42); drawShip(c,0,0,0,false); c.restore(); }
+    c.fillStyle="#FFB23F"; c.font="700 11px Fredoka, sans-serif"; c.fillText("P"+st.pow+(st.shield?" S":""),64+Math.min(st.lives,6)*17+4,hy+22);
     // 文字のお知らせ
     const big=(txt,y,a)=>{ c.globalAlpha=a; c.textAlign="center"; c.font="800 24px 'M PLUS Rounded 1c', Fredoka, sans-serif"; c.lineWidth=5; c.strokeStyle="rgba(8,14,32,.8)"; c.strokeText(txt,LW/2,y); c.fillStyle="#fff"; c.fillText(txt,LW/2,y); c.globalAlpha=1; };
     if(st.banner) big(st.banner.txt,LH*.38,Math.min(1,st.banner.t*1.5));
@@ -408,6 +440,7 @@ const SKY={
     else if(e.k==="spin"){ c.rotate(T/90); c.fillStyle="#FFC83D"; c.beginPath(); for(let k=0;k<8;k++){ const r=k%2?5:13, a=k*Math.PI/4; c[k?"lineTo":"moveTo"](Math.cos(a)*r,Math.sin(a)*r); } c.closePath(); c.fill(); c.fillStyle="#B45309"; c.beginPath(); c.arc(0,0,3,0,7); c.fill(); }
     else if(e.k==="heavy"){ c.fillStyle="#1F9D6B"; this.oct(c,0,0,22); c.fill(); c.fillStyle="#0E6B47"; c.fillRect(-28,-4,56,8);
       c.fillStyle=e.hp<3?"#FF6B6B":"#C6F6E2"; c.beginPath(); c.arc(0,0,8,0,7); c.fill(); }
+    if(e.hit>0){ c.globalAlpha=.8; c.fillStyle="#fff"; if(e.k==="heavy"){ this.oct(c,0,0,22); c.fill(); } else { c.beginPath(); c.arc(0,0,12,0,7); c.fill(); } c.globalAlpha=1; }
     c.restore(); }
 };
 return SKY;
