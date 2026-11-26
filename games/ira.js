@@ -99,7 +99,7 @@ const IRA={
     requestAnimationFrame(f); },
   hit(){ const st=this.st; st.lives--; st.flash=now(); sfx.ng(); if(this.s.vib&&navigator.vibrate) try{ navigator.vibrate(120); }catch(e){}
     this.hud();
-    if(st.lives<=0){ st.phase="over"; this.msg(t("iraOver")); setTimeout(()=>this.finish(false),900); return; }
+    if(st.lives<=0){ st.phase="over"; this.msg(t("iraOver")); setTimeout(()=>{ if(this.st===st) this.finish(false); },900); return; }
     // チェックポイントからやり直し
     const p=st.c.P[st.c.cps[st.cp]]; st.b={x:p.x,y:p.y}; st.v={x:0,y:0}; st.pend={x:0,y:0}; st.prog=st.c.cps[st.cp]; st.phase="wait"; st.t0=now(); this.msg(t("iraOuch")); },
   update(dt,T){ const st=this.st, c=st.c;
@@ -132,7 +132,7 @@ const IRA={
     const g=c.P[c.P.length-1]; if(Math.hypot(st.b.x-g.x,st.b.y-g.y)<c.W[c.W.length-1]*.8){ this.clear(); } },
   clear(){ const st=this.st; st.phase="clear"; st.total+=st.ms; sfx.win();
     const r=this.rec(); if(st.stage>r.idx||(st.stage===r.idx&&st.total<r.ms)) store.set("p_ira_rec2",{idx:st.stage,ms:st.total});
-    if(st.stage>=STAGES-1){ this.msg(t("iraAll")); setTimeout(()=>this.finish(true),1100); return; }
+    if(st.stage>=STAGES-1){ this.msg(t("iraAll")); setTimeout(()=>{ if(this.st===st) this.finish(true); },1100); return; }
     this.msg(t("iraClear",{n:label(st.stage),tm:fmtSec(st.ms)})); const id=st.id;
     setTimeout(()=>{ if(!this.st||this.st.id!==id) return; this.load(st.stage+1); },1500); },
   finish(all){ const st=this.st; if(!st) return; const reached=all?STAGES-1:st.stage-(st.phase==="over"?1:0);

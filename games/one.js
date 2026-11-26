@@ -131,7 +131,7 @@ const ONE={
     if(st.phase==="round") return; },
   // じゃまあり：ふざけた「ぷっ」音を不規則なリズムで鳴らす（数えるリズムを崩す）
   // じゃまあり：長さがバラバラの「ぷっ」と、いろいろなへんな音を不規則に鳴らす
-  snd(fn){ if(!store.get("b_snd",true)) return; const a=ac(); if(!a) return; try{ fn(a,a.currentTime); }catch(e){} },
+  snd(fn){ if(!store.get("p_snd",true)) return; const a=ac(); if(!a) return; try{ fn(a,a.currentTime); }catch(e){} },
   osc(a,t0,type,f1,f2,d,v,dest){ const o=a.createOscillator(),g=a.createGain(); o.type=type; o.frequency.setValueAtTime(f1,t0); o.frequency.exponentialRampToValueAtTime(Math.max(20,f2),t0+d);
     g.gain.setValueAtTime(.0001,t0); g.gain.exponentialRampToValueAtTime(v,t0+.015); g.gain.exponentialRampToValueAtTime(.0001,t0+d); o.connect(g); g.connect(dest||a.destination); o.start(t0); o.stop(t0+d+.05); return o; },
   fart(){ this.snd((a,t0)=>{ const r=Math.random(), d=r<.35?.06+Math.random()*.1:r<.75?.2+Math.random()*.4:.7+Math.random()*1.3, f0=60+Math.random()*110;
@@ -152,7 +152,7 @@ const ONE={
   burp(){ this.snd((a,t0)=>{ const fl=a.createBiquadFilter(); fl.type="bandpass"; fl.frequency.value=300; fl.Q.value=2; fl.connect(a.destination); this.osc(a,t0,"sawtooth",110,70,.5+Math.random()*.4,.5,fl); }); },
   weird(){ const L=["boing","honk","slide","cuckoo","pop","tick","burp"]; this[L[rnd(L.length)]](); },
   fartLoop(){ clearTimeout(this.fx); const go=()=>{ const r=Math.random();
-      if(r<.5){ this.fart(); if(Math.random()<.3) setTimeout(()=>this.fart(),80+Math.random()*350); } else this.weird();
+      if(r<.5){ this.fart(); if(Math.random()<.3){ clearTimeout(this.fx2); this.fx2=setTimeout(()=>this.fart(),80+Math.random()*350); } } else this.weird();
       this.fx=setTimeout(go,350+Math.random()*2600); }; this.fx=setTimeout(go,300+Math.random()*1200); },
   multi(){ const st=this.st,box=$("#onMulti"); st.tres=Array(st.n).fill(null); box.className="onmulti on";
     box.innerHTML=Array.from({length:st.n},(_,i)=>`<button type="button" data-p="${i}">${esc(t("onPlayerN",{n:i+1}))}</button>`).join("");
@@ -160,7 +160,7 @@ const ONE={
       const ms=now()-st.t0; if(ms<400) return; const diff=(ms-st.tg*1000)/1000; st.tres[i]={ms,ad:Math.abs(diff),diff}; b.classList.add("done"); b.textContent=t("onPlayerN",{n:i+1})+" ✓"; sfx.tap();
       if(st.tres.every(Boolean)){ this.noise(false); st.res=st.tres; st.res.forEach((x,k)=>st.tot[k]+=x.ad); $("#onMulti").className="onmulti"; this.roundRank(); } })); },
   voice(){ try{ const ss=window.speechSynthesis; if(!ss) return; const u=new SpeechSynthesisUtterance(String(1+rnd(59))); u.lang=lang==="ja"?"ja-JP":lang==="en"?"en-US":"zh-TW"; u.rate=.9+Math.random()*.6; ss.speak(u); }catch(e){} },
-  noise(on){ clearInterval(this.nt); clearTimeout(this.fx); clearTimeout(this.vt); try{ window.speechSynthesis&&speechSynthesis.cancel(); }catch(e){} $("#onPad").classList.remove("shake"); const box=$("#onNoiseBox"); box.innerHTML=""; if(!on) return;
+  noise(on){ clearInterval(this.nt); clearTimeout(this.fx); clearTimeout(this.fx2); clearTimeout(this.vt); try{ window.speechSynthesis&&speechSynthesis.cancel(); }catch(e){} $("#onPad").classList.remove("shake"); const box=$("#onNoiseBox"); box.innerHTML=""; if(!on) return;
     const lv=this.st?this.st.nz:2; if(lv>=2) this.fartLoop();
     if(lv>=3){ $("#onPad").classList.add("shake"); const v=()=>{ this.voice(); this.vt=setTimeout(v,1200+Math.random()*2500); }; this.vt=setTimeout(v,800); }
     // じゃまあり：数字があちこちに出て、頭の中で数えるのをじゃまする

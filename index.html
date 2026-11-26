@@ -427,7 +427,7 @@ body[data-mode="home"] #homeBtn{display:none}
 <script>const SOLO=null;</script>
 <script>
 /* ===== 設定 ===== */
-const APP_VER="2026.11.26-4";
+const APP_VER="2026.11.27-1";
 const SUPPORT_URL="https://ofuse.me/45tools";
 // 使い方のリンク（公開後に記事・動画のURLを入れる。空なら表示しない）
 const GUIDE={ note:"https://note.com/45tools/n/nd0ae097ad7a6",  // 日本語：note記事（ゲーム別の記事があれば notes を優先）
@@ -593,7 +593,9 @@ const I18N={
 
 /* ===== 共通 ===== */
 const store={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
-let lang=store.get("b_lang",null)||(()=>{ const n=(navigator.language||"ja").toLowerCase(); return n.startsWith("zh")?(/(tw|hk|mo|hant)/.test(n)?"zh-Hant":"zh"):n.startsWith("ja")?"ja":"en"; })();
+// 45 Brain と同じ場所（45tools.github.io）に保存されるので、設定は p_ で分ける。前の設定（b_）があれば1回だけ引きつぐ（2026-11-27）
+["snd","tts","lang"].forEach(k=>{ try{ if(localStorage.getItem("p_"+k)==null&&localStorage.getItem("b_"+k)!=null) localStorage.setItem("p_"+k,localStorage.getItem("b_"+k)); }catch(e){} });
+let lang=store.get("p_lang",null)||(()=>{ const n=(navigator.language||"ja").toLowerCase(); return n.startsWith("zh")?(/(tw|hk|mo|hant)/.test(n)?"zh-Hant":"zh"):n.startsWith("ja")?"ja":"en"; })();
 if(!I18N[lang]) lang="ja";
 const t=(k,p)=>{let s=(I18N[lang]||I18N.ja)[k]??I18N.ja[k]??k; if(p) for(const x in p) s=s.split("{"+x+"}").join(p[x]); return s;};
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
@@ -617,14 +619,14 @@ function ac(){ if(AC&&AC.state==="closed") AC=null; if(!AC){ try{ AC=new (window
 // 音が出なくなったとき（iPhoneで時計が止まったままになる等）に作り直す
 function acReset(){ try{ AC&&AC.close(); }catch(e){} AC=null; return ac(); }
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&AC&&AC.state!=="running") ac(); });
-function tone(f,d,type="sine",v=.15,delay=0){ if(!store.get("b_snd",true)) return; const a=ac(); if(!a) return;
+function tone(f,d,type="sine",v=.15,delay=0){ if(!store.get("p_snd",true)) return; const a=ac(); if(!a) return;
   try{ const o=a.createOscillator(),g=a.createGain(); o.type=type; o.frequency.value=f; const t0=a.currentTime+delay;
   g.gain.setValueAtTime(0.0001,t0); g.gain.exponentialRampToValueAtTime(v,t0+.012); g.gain.exponentialRampToValueAtTime(.0001,t0+d);
   o.connect(g); g.connect(a.destination); o.start(t0); o.stop(t0+d+.03); }catch(e){} }
-const sfx={ok(){tone(880,.12,"sine",.18);tone(1320,.2,"sine",.15,.09)},ng(){tone(220,.28,"square",.07);tone(165,.3,"square",.06,.1)},tap(){tone(700,.05,"triangle",.07)},
+const sfx={ok(){tone(880,.12,"sine",.18);tone(1320,.2,"sine",.15,.09)},ng(){tone(311,.14,"triangle",.17);tone(233,.26,"triangle",.15,.11)},tap(){tone(700,.05,"triangle",.07)},
   win(){[523,659,784,1047].forEach((f,i)=>tone(f,.22,"sine",.15,i*.1))},flash(){tone(1046,.12,"sine",.1)},hit(){tone(988,.1,"triangle",.12)}};
 document.addEventListener("pointerdown",()=>ac(),{once:true});
-function speak(txt){ if(!store.get("b_tts",true)||!("speechSynthesis" in window)||!txt) return;
+function speak(txt){ if(!store.get("p_tts",true)||!("speechSynthesis" in window)||!txt) return;
   try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(txt); u.lang="en-US"; u.rate=.92;
     const v=speechSynthesis.getVoices().find(v=>(v.lang||"").replace("_","-").startsWith("en-US")); if(v) u.voice=v; speechSynthesis.speak(u); }catch(e){} }
 
@@ -674,7 +676,7 @@ const TILE={
    ========================================================= */
 const MODS={};
 let mode="home";
-const PREVIEW=(()=>{ try{ const q=new URLSearchParams(location.search).get("preview"); if(q==="0") store.del("b_preview"); else if(q!=null) store.set("b_preview",true); }catch(e){} return !!store.get("b_preview",false); })();
+const PREVIEW=(()=>{ try{ const q=new URLSearchParams(location.search).get("preview"); if(q==="0") store.del("p_preview"); else if(q!=null) store.set("p_preview",true); }catch(e){} return !!store.get("p_preview",false); })();
 const gameOf=id=>GAMES.find(g=>g.id===id);
 const relTime=g=>g&&g.rel?Date.parse(g.rel):0;
 const isOpen=g=>!!g&&(!g.rel||Date.now()>=relTime(g));
@@ -705,7 +707,7 @@ async function setMode(m,push){ const g=gameOf(m); const my=++navSeq;
   document.body.dataset.mode=m; if(!MODS[m]){ showPane("loading"); setDock(""); }
   try{ await loadGame(m); }catch(e){ toast(t("loadFail")); if(my===navSeq){ mode="home"; setMode("home"); } return; }
   if(my!==navSeq) return;
-  mode=m; document.body.dataset.mode=m; showPane(m); barTitle(); store.set("b_mode",m);
+  mode=m; document.body.dataset.mode=m; showPane(m); barTitle(); store.set("p_mode",m);
   if(!SOLO&&location.hash!=="#"+m) history[push?"pushState":"replaceState"](null,"","#"+m);
   MODS[m].refresh&&MODS[m].refresh(); MODS[m].dock(); window.scrollTo(0,0); paintGuide(); }
 // 画面に収まっているときは上下にスライドしないよう固定する（45toolsの全アプリ共通ルール）
@@ -729,17 +731,17 @@ document.addEventListener("keydown",e=>{ if(e.target.matches&&e.target.matches("
 /* メニュー */
 function openMenu(on){ $("#menu").hidden=!on; $("#scrim").hidden=!on; $("#menuBtn").setAttribute("aria-expanded",on?"true":"false"); }
 $("#menuBtn").onclick=()=>openMenu($("#menu").hidden); $("#scrim").onclick=()=>openMenu(false);
-function paintToggles(){ const s=store.get("b_snd",true),v=store.get("b_tts",true);
+function paintToggles(){ const s=store.get("p_snd",true),v=store.get("p_tts",true);
   $("#sndV").textContent=t(s?"on":"off"); $("#sndV").classList.toggle("on",s); $("#ttsV").textContent=t(v?"on":"off"); $("#ttsV").classList.toggle("on",v); }
 // 使い方：日本語はnote記事、英語・中国語はそのゲームのショート
 function guideURL(){ if(lang==="ja") return (GUIDE.notes&&GUIDE.notes[mode])||GUIDE.note; const v=GUIDE.video[mode]; if(!v) return ""; return lang==="en"?v.en:(v.zh||v.en); }
 function paintGuide(){ const u=guideURL(),a=$("#guideLink"); a.hidden=!u; if(u) a.href=u; $("#guideLbl").textContent=t(lang==="ja"?"guideNote":"guideVideo"); }
-$("#sndBtn").onclick=()=>{ store.set("b_snd",!store.get("b_snd",true)); paintToggles(); sfx.tap(); };
-$("#ttsBtn").onclick=()=>{ const v=!store.get("b_tts",true); store.set("b_tts",v); paintToggles(); if(v) speak("Japan"); };
+$("#sndBtn").onclick=()=>{ store.set("p_snd",!store.get("p_snd",true)); paintToggles(); sfx.tap(); };
+$("#ttsBtn").onclick=()=>{ const v=!store.get("p_tts",true); store.set("p_tts",v); paintToggles(); if(v) speak("Japan"); };
 let resetArmed=0;
 $("#resetBtn").onclick=()=>{ if(Date.now()-resetArmed>4000){ resetArmed=Date.now(); toast(t("resetAsk2")); return; } resetArmed=0; openMenu(false);
-  ["p_ira_rec","p_rv_rec","b_ks_rec","p_one_rec","p_taiko_rec","p_az_rec"].forEach(k=>store.del(k)); Object.values(MODS).forEach(m=>m.refresh()); toast(t("resetDone")); };
-$("#lang").onchange=e=>{ lang=e.target.value; store.set("b_lang",lang); applyLang(); };
+  ["p_ira_rec","p_ira_rec2","p_rv_rec","b_ks_rec","p_one_rec","p_taiko_rec","p_sky_rec","p_kart_rec","p_az_rec"].forEach(k=>store.del(k)); Object.values(MODS).forEach(m=>m.refresh()); toast(t("resetDone")); };
+$("#lang").onchange=e=>{ lang=e.target.value; store.set("p_lang",lang); applyLang(); };
 function howHTML(){ const ids=GAMES.filter(g=>MODS[g.id]&&g.id===mode).map(g=>g.id); const show=ids.length?ids:GAMES.filter(g=>canPlay(g)).map(g=>g.id);
   return show.map(id=>t("how_"+id)).join("<br><br>")+`<br><br><small style="color:var(--muted)">${t("howFoot")}</small>`; }
 $("#helpBtn").onclick=()=>{ openMenu(false); $("#howText").innerHTML=howHTML(); $("#helpOv").classList.add("on"); };

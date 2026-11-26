@@ -148,7 +148,7 @@ const TK={
     if(on&&!this.locked){ this.locked=true; try{ history.pushState({tk:1},"",location.href); }catch(e){} addEventListener("popstate",this.onPop); addEventListener("beforeunload",this.onUnload); }
     else if(!on&&this.locked){ this.locked=false; removeEventListener("popstate",this.onPop); removeEventListener("beforeunload",this.onUnload); try{ if(history.state&&history.state.tk) history.back(); }catch(e){} } },
   session(type){ try{ if(navigator.audioSession) navigator.audioSession.type=type; }catch(e){} },
-  hit(id,t0,dest,v){ if(!store.get("b_snd",true)) return; const a=this.alive(); if(!a) return; t0=t0||a.currentTime; dest=dest||this.bus(a); v=v==null?1:v;
+  hit(id,t0,dest,v){ if(!store.get("p_snd",true)) return; const a=this.alive(); if(!a) return; t0=t0||a.currentTime; dest=dest||this.bus(a); v=v==null?1:v;
     try{ const b=id&&id.startsWith("my")?this.my[id]:null;
       if(b){ const s=a.createBufferSource(),g=a.createGain(); s.buffer=b; g.gain.value=v; s.connect(g); g.connect(dest); s.start(t0); return; }
       (this.SY[id]||this.SY.don).call(this,a,t0,dest,v); }catch(e){} },
@@ -208,7 +208,7 @@ const TK={
     fl.type="lowpass"; fl.frequency.value=2200; g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.11,t+.02); g.gain.setValueAtTime(.09,t+Math.max(.03,dur-.06)); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
     o.connect(fl); o2.connect(fl); fl.connect(g); g.connect(d); o.start(t); o2.start(t); o.stop(t+dur+.05); o2.stop(t+dur+.05); },
   // 曲を t0 から鳴らす（countIn なら最初の1小節は「カン」4つ）。曲の終わりの時刻を返す
-  music(sg,t0,countIn,vol){ const a=ac(),st=this.st; if(!store.get("b_snd",true)) return t0+(sg.mel.length+(countIn?1:0))*60/sg.bpm*4;
+  music(sg,t0,countIn,vol){ const a=ac(),st=this.st; if(!store.get("p_snd",true)) return t0+(sg.mel.length+(countIn?1:0))*60/sg.bpm*4;
     const g=a.createGain(); g.gain.value=vol||.55; g.connect(a.destination); (st.mgs=st.mgs||[]).push(g);
     const e=60/sg.bpm/2, bd=e*8, ch=sg.ch.split(" "); let t=t0;
     if(countIn){ for(let k=0;k<4;k++) this.SY.kan.call(this,a,t0+k*e*2,g,.7); t+=bd; }

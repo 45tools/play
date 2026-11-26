@@ -130,7 +130,7 @@ function expand(r){ const out=[]; (r.layers||[]).forEach(L=>{ if(L.notes==null){
 let NB=null;
 const SND={ bus:null,busA:null,last:{},
   out(a){ if(this.busA!==a||!this.bus){ const g=a.createGain(),cp=a.createDynamicsCompressor(); cp.threshold.value=-14; cp.ratio.value=4; cp.attack.value=.003; cp.release.value=.2; g.gain.value=.8; g.connect(cp); cp.connect(a.destination); this.bus=g; this.busA=a; } return this.bus; },
-  play(name,vol=1,minGap=0){ if(!store.get("b_snd",true)) return; const r=REC[name]; if(!r) return; const a=ac(); if(!a) return;
+  play(name,vol=1,minGap=0){ if(!store.get("p_snd",true)) return; const r=REC[name]; if(!r) return; const a=ac(); if(!a) return;
     const T=a.currentTime; if(minGap&&this.last[name]&&T-this.last[name]<minGap) return; this.last[name]=T;
     try{ const t0=T+.01; let master=a.createGain(); master.gain.value=vol*Math.pow(10,(r.peak_db??-1)/20)*.9; master.connect(this.out(a));
       if(r.echo){ const e=r.echo,d=a.createDelay(2),fb=a.createGain(),bus=a.createGain(); d.delayTime.value=e.delay??.12; fb.gain.value=e.feedback??.35; bus.connect(master); bus.connect(d); d.connect(fb); fb.connect(d); d.connect(master); master=bus; }
@@ -199,11 +199,11 @@ const KART={
     else if(!on&&this.locked){ this.locked=false; removeEventListener("popstate",this.onPop); removeEventListener("beforeunload",this.onUnload); try{ if(history.state&&history.state.kt) history.back(); }catch(e){} } },
 
   /* ---------- 音楽・エンジン音 ---------- */
-  async bgmOn(){ if(this.s.bgm!=="on"||!store.get("b_snd",true)) return; const a=ac(); if(!a) return;
+  async bgmOn(){ if(this.s.bgm!=="on"||!store.get("p_snd",true)) return; const a=ac(); if(!a) return;
     try{ if(!this.bgBuf||this.bgA!==a){ const res=await fetch(`snd/kart.mp3?v=${APP_VER}`); const ab=await res.arrayBuffer(); this.bgBuf=await new Promise((ok,ng)=>a.decodeAudioData(ab,ok,ng)); this.bgA=a; }
       if(!this.st||this.st.paused) return; this.bgmOff(); const s=a.createBufferSource(),g=a.createGain(); s.buffer=this.bgBuf; s.loop=true; g.gain.value=.26; s.connect(g); g.connect(SND.out(a)); s.start(a.currentTime+.05); this.bg={s,g}; }catch(e){} },
   bgmOff(){ if(this.bg){ try{ this.bg.s.stop(); }catch(e){} this.bg=null; } },
-  engOn(){ if(!store.get("b_snd",true)) return; const a=ac(); if(!a||this.eng) return;
+  engOn(){ if(!store.get("p_snd",true)) return; const a=ac(); if(!a||this.eng) return;
     try{ const o1=a.createOscillator(),o2=a.createOscillator(),f=a.createBiquadFilter(),g=a.createGain(); o1.type="sawtooth"; o2.type="square"; f.type="lowpass"; f.frequency.value=600; g.gain.value=0;
       o1.connect(f); o2.connect(f); f.connect(g); g.connect(SND.out(a)); o1.start(); o2.start(); this.eng={o1,o2,f,g,a}; }catch(e){} },
   engSet(v,boost){ const e=this.eng; if(!e) return; const T=e.a.currentTime, fr=55+v*.55+(boost?40:0);
