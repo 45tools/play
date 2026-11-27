@@ -1,4 +1,4 @@
-const C="play-2026.11.27-3";
+const C="play-2026.11.27-4";
 const FILES=["./", "index.html", "manifest.json", "icon-180.png", "icon-192.png", "icon-512.png", "ira/", "ira/index.html", "games/ira.js", "ira/icon-180.png", "rv/", "rv/index.html", "games/rv.js", "rv/icon-180.png", "kesi/", "kesi/index.html", "games/kesi.js", "kesi/icon-180.png", "one/", "one/index.html", "games/one.js", "one/icon-180.png", "taiko/", "taiko/index.html", "games/taiko.js", "taiko/icon-180.png", "sky/", "sky/index.html", "games/sky.js", "sky/icon-180.png", "kart/", "kart/index.html", "games/kart.js", "kart/icon-180.png", "lib/matter.min.js", "snd/sky.mp3", "snd/kart.mp3"];
 // 入れるときは必ずサーバーから取り直す（端末に残った古い版を使わない）
 self.addEventListener("install",e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(FILES.map(u=>new Request(u,{cache:"reload"})))).catch(()=>{}));self.skipWaiting();});
