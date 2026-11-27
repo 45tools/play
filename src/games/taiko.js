@@ -121,8 +121,9 @@ const TK={
     g.gain.setValueAtTime(.0001,t0); g.gain.exponentialRampToValueAtTime(Math.max(.0002,v),t0+.003); g.gain.exponentialRampToValueAtTime(.0001,t0+d); s.connect(f); f.connect(g); g.connect(dest); s.start(t0,Math.random()*.5); s.stop(t0+d+.05); },
   SY:{
     // スマホのスピーカーは低い音が出にくいので、少し高い音（200〜300Hz）と打つ音を重ねて大きく聞こえるようにする
-    don(a,t,d,v){ this.tn(a,t,d,"sine",190,62,.6,1*v); this.tn(a,t,d,"triangle",290,115,.32,.7*v); this.tn(a,t,d,"square",140,72,.12,.14*v);
-      this.nz(a,t,d,"bandpass",520,1.2,.08,.9*v); this.nz(a,t,d,"lowpass",2000,.7,.025,.5*v); },
+    // 2026-11-27 さらに大きく：スマホで聞こえる帯域（300〜700Hz）の胴鳴りと、打った瞬間の音を強めた
+    don(a,t,d,v){ this.tn(a,t,d,"sine",190,62,.6,1*v); this.tn(a,t,d,"triangle",330,130,.4,1.1*v); this.tn(a,t,d,"sine",520,210,.25,.6*v); this.tn(a,t,d,"square",150,75,.14,.28*v);
+      this.nz(a,t,d,"bandpass",600,1.1,.12,1.4*v); this.nz(a,t,d,"lowpass",2500,.7,.03,.8*v); },
     pon(a,t,d,v){ this.tn(a,t,d,"sine",430,230,.22,.75*v); this.nz(a,t,d,"bandpass",1800,2,.03,.25*v); },
     tan(a,t,d,v){ this.nz(a,t,d,"highpass",1500,.7,.18,.6*v); this.tn(a,t,d,"triangle",240,160,.1,.45*v); },
     kan(a,t,d,v){ this.tn(a,t,d,"square",1250,1150,.05,.22*v); this.nz(a,t,d,"bandpass",3000,6,.04,.45*v); this.tn(a,t,d,"sine",820,800,.09,.35*v); },
